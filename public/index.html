@@ -3,66 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal de Consultas Sankhya</title>
+    <title>Sankhya - Portal Operacional</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: 100%; max-width: 500px; }
+        body { background: #f0f2f5; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
         .hidden { display: none !important; }
-        h1 { color: #333; margin-bottom: 20px; font-size: 24px; text-align: center; }
-        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #eee; border-radius: 8px; outline: none; font-size: 16px; }
-        input:focus { border-color: #1a2a6c; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 8px; background: #1a2a6c; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; margin-bottom: 10px; }
-        button:hover { background: #b21f1f; }
-        .secondary { background: #666; }
-        .status { padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; text-align: center; }
-        .loading { background: #fff3cd; color: #856404; }
+        h1 { font-size: 22px; color: #1a2a6c; margin-bottom: 20px; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        label { display: block; margin-top: 15px; font-weight: 600; color: #444; font-size: 13px; }
+        input, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; }
+        textarea { height: 80px; resize: none; }
+        button { width: 100%; padding: 14px; border: none; border-radius: 8px; background: #1a2a6c; color: white; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.3s; }
+        button:hover { background: #000; }
+        .btn-save { background: #28a745; margin-top: 25px; }
+        .btn-save:hover { background: #218838; }
+        .btn-logout { background: #6c757d; font-size: 12px; padding: 8px; width: auto; margin: 0 auto; display: block; }
+        .status { padding: 12px; border-radius: 8px; margin-top: 15px; text-align: center; }
+        .loading { background: #e7f3ff; color: #004085; }
         .error { background: #f8d7da; color: #721c24; }
-        .success { background: #d4edda; color: #155724; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-        th { background: #f4f4f4; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }
-        td { padding: 10px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div id="loginSection">
-            <h1>🔐 Acesso Sankhya</h1>
+            <h1>🔓 Login Sankhya</h1>
             <div id="loginStatus"></div>
             <input type="text" id="userInput" placeholder="Usuário (CPF)">
             <input type="password" id="passInput" placeholder="Senha">
-            <button id="loginBtn" onclick="handleLogin()">Entrar no Sistema</button>
+            <button onclick="handleLogin()">Entrar</button>
         </div>
 
         <div id="mainSection" class="hidden">
-            <h1>🔍 Consultar Pedido</h1>
-            <input type="number" id="nuNotaInput" placeholder="Digite o NUNOTA">
-            <button id="searchBtn" onclick="executeWorkflow()">Pesquisar</button>
-            <button class="secondary" onclick="location.reload()">Sair</button>
+            <h1>📦 Gestão de Pedido</h1>
+            <div style="display: flex; gap: 10px;">
+                <input type="number" id="nuNotaInput" placeholder="NUNOTA">
+                <button style="width: 150px; margin-top: 5px;" onclick="executeWorkflow()">Buscar</button>
+            </div>
             
             <div id="statusContainer"></div>
-            <div id="resultsContainer"></div>
+            
+            <div id="editorArea" class="hidden">
+                <label>Obs. PCP / Expedição (AD_OBSINT):</label>
+                <textarea id="obs_AD_OBSINT"></textarea>
+
+                <label>Obs. Pedido (AD_OBSINTERNA):</label>
+                <textarea id="obs_AD_OBSINTERNA"></textarea>
+
+                <label>Obs. do PCP (AD_OBSPCP):</label>
+                <textarea id="obs_AD_OBSPCP"></textarea>
+
+                <label>Obs. Financeiro (AD_OBSFINANCEIRO):</label>
+                <textarea id="obs_AD_OBSFINANCEIRO"></textarea>
+
+                <label>Obs. Faturamento (AD_OBSFATURAMENTO):</label>
+                <textarea id="obs_AD_OBSFATURAMENTO"></textarea>
+
+                <button class="btn-save" id="saveBtn" onclick="saveChanges()">💾 Salvar Alterações</button>
+            </div>
+            
+            <button class="btn-logout" onclick="location.reload()">Sair do Sistema</button>
         </div>
     </div>
 
     <script>
         const API_BASE = '/api';
-        let session = { id: null, cookies: null };
+        let session = { id: null, cookies: null, currentNuNota: null };
 
         async function handleLogin() {
             const user = document.getElementById('userInput').value;
             const password = document.getElementById('passInput').value;
-            const btn = document.getElementById('loginBtn');
             const status = document.getElementById('loginStatus');
-
-            if (!user || !password) {
-                status.innerHTML = `<div class="status error">Preencha todos os campos!</div>`;
-                return;
-            }
-
-            btn.disabled = true;
-            status.innerHTML = `<div class="status loading">Validando acesso...</div>`;
 
             try {
                 const res = await fetch(`${API_BASE}/login`, {
@@ -70,66 +81,80 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ user, password })
                 });
-
                 const result = await res.json();
-
                 if (result.success) {
                     session.id = result.data.responseBody.jsessionid.$;
                     session.cookies = result.cookies;
-                    
                     document.getElementById('loginSection').classList.add('hidden');
                     document.getElementById('mainSection').classList.remove('hidden');
                 } else {
                     status.innerHTML = `<div class="status error">${result.error}</div>`;
                 }
-            } catch (e) {
-                status.innerHTML = `<div class="status error">Erro de conexão com o servidor.</div>`;
-            } finally {
-                btn.disabled = false;
-            }
+            } catch (e) { alert("Erro de conexão."); }
         }
 
         async function executeWorkflow() {
             const nuNota = document.getElementById('nuNotaInput').value;
-            const results = document.getElementById('resultsContainer');
             const status = document.getElementById('statusContainer');
+            const editor = document.getElementById('editorArea');
 
             if (!nuNota) return;
-
-            results.innerHTML = '';
-            status.innerHTML = `<div class="status loading">Buscando pedido...</div>`;
+            status.innerHTML = `<div class="status loading">Buscando...</div>`;
+            editor.classList.add('hidden');
 
             try {
                 const res = await fetch(`${API_BASE}/query`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jsessionid: session.id, cookies: session.cookies, nuNota })
+                });
+                const result = await res.json();
+                const row = result.data.responseBody?.rows?.[0];
+
+                if (!row) {
+                    status.innerHTML = `<div class="status error">Pedido não encontrado.</div>`;
+                } else {
+                    status.innerHTML = '';
+                    session.currentNuNota = row[0];
+                    document.getElementById('obs_AD_OBSINT').value = row[4] || '';
+                    document.getElementById('obs_AD_OBSINTERNA').value = row[5] || '';
+                    document.getElementById('obs_AD_OBSPCP').value = row[6] || '';
+                    document.getElementById('obs_AD_OBSFINANCEIRO').value = row[7] || '';
+                    document.getElementById('obs_AD_OBSFATURAMENTO').value = row[8] || '';
+                    editor.classList.remove('hidden');
+                }
+            } catch (e) { status.innerHTML = `<div class="status error">Erro na busca.</div>`; }
+        }
+
+        async function saveChanges() {
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.innerText = "Salvando...";
+
+            const campos = {
+                AD_OBSINT: document.getElementById('obs_AD_OBSINT').value,
+                AD_OBSINTERNA: document.getElementById('obs_AD_OBSINTERNA').value,
+                AD_OBSPCP: document.getElementById('obs_AD_OBSPCP').value,
+                AD_OBSFINANCEIRO: document.getElementById('obs_AD_OBSFINANCEIRO').value,
+                AD_OBSFATURAMENTO: document.getElementById('obs_AD_OBSFATURAMENTO').value
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/update`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         jsessionid: session.id,
                         cookies: session.cookies,
-                        nuNota: nuNota
+                        nuNota: session.currentNuNota,
+                        campos: campos
                     })
                 });
-
-                const queryData = await res.json();
-                const rows = queryData.data.responseBody?.rows || [];
-
-                if (rows.length === 0) {
-                    status.innerHTML = `<div class="status error">Pedido não encontrado.</div>`;
-                } else {
-                    status.innerHTML = `<div class="status success">Sucesso!</div>`;
-                    const row = rows[0];
-                    results.innerHTML = `
-                        <table>
-                            <tr><th>NUNOTA</th><td>${row[0]}</td></tr>
-                            <tr><th>DATA</th><td>${row[1]}</td></tr>
-                            <tr><th>VALOR</th><td style="color:green;font-weight:bold">R$ ${parseFloat(row[2]).toFixed(2)}</td></tr>
-                            <tr><th>PARCEIRO</th><td>${row[3]}</td></tr>
-                        </table>
-                    `;
-                }
-            } catch (e) {
-                status.innerHTML = `<div class="status error">Erro ao consultar.</div>`;
-            }
+                const result = await res.json();
+                if (result.success) alert("✅ Dados atualizados no Sankhya!");
+                else alert("❌ Erro ao salvar.");
+            } catch (e) { alert("Erro de conexão."); }
+            finally { btn.disabled = false; btn.innerText = "💾 Salvar Alterações"; }
         }
     </script>
 </body>
