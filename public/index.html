@@ -3,66 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sankhya - Portal Operacional</title>
+    <title>Sankhya Ops - Edição de Pedidos</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: #f0f2f5; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+        body { background: #e9ecef; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); width: 100%; max-width: 750px; }
         .hidden { display: none !important; }
-        h1 { font-size: 22px; color: #1a2a6c; margin-bottom: 20px; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        label { display: block; margin-top: 15px; font-weight: 600; color: #444; font-size: 13px; }
-        input, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; }
-        textarea { height: 80px; resize: none; }
-        button { width: 100%; padding: 14px; border: none; border-radius: 8px; background: #1a2a6c; color: white; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.3s; }
-        button:hover { background: #000; }
-        .btn-save { background: #28a745; margin-top: 25px; }
+        h1 { font-size: 20px; color: #2c3e50; text-align: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        
+        .login-box { max-width: 400px; margin: 0 auto; }
+        input, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; }
+        
+        .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .full-row { grid-column: span 2; }
+        label { display: block; margin-top: 10px; font-weight: bold; color: #495057; font-size: 12px; text-transform: uppercase; }
+        textarea { height: 70px; resize: none; background: #fcfcfc; }
+        textarea:focus { border-color: #007bff; background: #fff; outline: none; }
+
+        button { width: 100%; padding: 12px; border: none; border-radius: 6px; background: #2c3e50; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 15px; }
+        button:hover { background: #1a252f; }
+        .btn-save { background: #28a745; margin-top: 25px; font-size: 16px; }
         .btn-save:hover { background: #218838; }
-        .btn-logout { background: #6c757d; font-size: 12px; padding: 8px; width: auto; margin: 0 auto; display: block; }
-        .status { padding: 12px; border-radius: 8px; margin-top: 15px; text-align: center; }
-        .loading { background: #e7f3ff; color: #004085; }
+        
+        .status { padding: 10px; border-radius: 6px; margin-top: 15px; text-align: center; font-size: 14px; }
+        .loading { background: #cce5ff; color: #004085; }
         .error { background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div id="loginSection">
-            <h1>🔓 Login Sankhya</h1>
+        <div id="loginSection" class="login-box">
+            <h1>🔐 Login Sankhya</h1>
             <div id="loginStatus"></div>
             <input type="text" id="userInput" placeholder="Usuário (CPF)">
             <input type="password" id="passInput" placeholder="Senha">
-            <button onclick="handleLogin()">Entrar</button>
+            <button onclick="handleLogin()">Acessar</button>
         </div>
 
         <div id="mainSection" class="hidden">
-            <h1>📦 Gestão de Pedido</h1>
+            <h1>📦 Gestão de Observações</h1>
             <div style="display: flex; gap: 10px;">
-                <input type="number" id="nuNotaInput" placeholder="NUNOTA">
-                <button style="width: 150px; margin-top: 5px;" onclick="executeWorkflow()">Buscar</button>
+                <input type="number" id="nuNotaInput" placeholder="Digite o NUNOTA">
+                <button style="width: 120px; margin-top: 5px;" onclick="executeSearch()">Buscar</button>
             </div>
             
-            <div id="statusContainer"></div>
-            
+            <div id="searchStatus"></div>
+
             <div id="editorArea" class="hidden">
-                <label>Obs. PCP / Expedição (AD_OBSINT):</label>
-                <textarea id="obs_AD_OBSINT"></textarea>
-
-                <label>Obs. Pedido (AD_OBSINTERNA):</label>
-                <textarea id="obs_AD_OBSINTERNA"></textarea>
-
-                <label>Obs. do PCP (AD_OBSPCP):</label>
-                <textarea id="obs_AD_OBSPCP"></textarea>
-
-                <label>Obs. Financeiro (AD_OBSFINANCEIRO):</label>
-                <textarea id="obs_AD_OBSFINANCEIRO"></textarea>
-
-                <label>Obs. Faturamento (AD_OBSFATURAMENTO):</label>
-                <textarea id="obs_AD_OBSFATURAMENTO"></textarea>
-
-                <button class="btn-save" id="saveBtn" onclick="saveChanges()">💾 Salvar Alterações</button>
+                <div class="editor-grid">
+                    <div class="full-row">
+                        <label>📝 Observação Pedido (AD_OBSINTERNA)</label>
+                        <textarea id="obs_AD_OBSINTERNA"></textarea>
+                    </div>
+                    <div>
+                        <label>🏗️ Obs. do PCP (AD_OBSPCP)</label>
+                        <textarea id="obs_AD_OBSPCP"></textarea>
+                    </div>
+                    <div>
+                        <label>🚚 Obs. Expedição (AD_OBSINT)</label>
+                        <textarea id="obs_AD_OBSINT"></textarea>
+                    </div>
+                    <div>
+                        <label>💰 Obs. Financeiro (AD_OBSFINANCEIRO)</label>
+                        <textarea id="obs_AD_OBSFINANCEIRO"></textarea>
+                    </div>
+                    <div>
+                        <label>🏭 Obs. Faturamento (AD_OBSFATURAMENTO)</label>
+                        <textarea id="obs_AD_OBSFATURAMENTO"></textarea>
+                    </div>
+                </div>
+                <button class="btn-save" id="saveBtn" onclick="saveChanges()">💾 Salvar no Sankhya</button>
             </div>
             
-            <button class="btn-logout" onclick="location.reload()">Sair do Sistema</button>
+            <button style="background: #6c757d; font-size: 11px;" onclick="location.reload()">Sair</button>
         </div>
     </div>
 
@@ -74,7 +88,6 @@
             const user = document.getElementById('userInput').value;
             const password = document.getElementById('passInput').value;
             const status = document.getElementById('loginStatus');
-
             try {
                 const res = await fetch(`${API_BASE}/login`, {
                     method: 'POST',
@@ -87,19 +100,17 @@
                     session.cookies = result.cookies;
                     document.getElementById('loginSection').classList.add('hidden');
                     document.getElementById('mainSection').classList.remove('hidden');
-                } else {
-                    status.innerHTML = `<div class="status error">${result.error}</div>`;
-                }
+                } else { status.innerHTML = `<div class="status error">${result.error}</div>`; }
             } catch (e) { alert("Erro de conexão."); }
         }
 
-        async function executeWorkflow() {
+        async function executeSearch() {
             const nuNota = document.getElementById('nuNotaInput').value;
-            const status = document.getElementById('statusContainer');
+            const status = document.getElementById('searchStatus');
             const editor = document.getElementById('editorArea');
-
             if (!nuNota) return;
-            status.innerHTML = `<div class="status loading">Buscando...</div>`;
+
+            status.innerHTML = `<div class="status loading">Localizando pedido...</div>`;
             editor.classList.add('hidden');
 
             try {
@@ -116,11 +127,11 @@
                 } else {
                     status.innerHTML = '';
                     session.currentNuNota = row[0];
-                    document.getElementById('obs_AD_OBSINT').value = row[4] || '';
-                    document.getElementById('obs_AD_OBSINTERNA').value = row[5] || '';
-                    document.getElementById('obs_AD_OBSPCP').value = row[6] || '';
-                    document.getElementById('obs_AD_OBSFINANCEIRO').value = row[7] || '';
-                    document.getElementById('obs_AD_OBSFATURAMENTO').value = row[8] || '';
+                    document.getElementById('obs_AD_OBSINTERNA').value = row[3] || '';
+                    document.getElementById('obs_AD_OBSPCP').value = row[4] || '';
+                    document.getElementById('obs_AD_OBSINT').value = row[2] || '';
+                    document.getElementById('obs_AD_OBSFINANCEIRO').value = row[5] || '';
+                    document.getElementById('obs_AD_OBSFATURAMENTO').value = row[6] || '';
                     editor.classList.remove('hidden');
                 }
             } catch (e) { status.innerHTML = `<div class="status error">Erro na busca.</div>`; }
@@ -128,33 +139,25 @@
 
         async function saveChanges() {
             const btn = document.getElementById('saveBtn');
-            btn.disabled = true;
-            btn.innerText = "Salvando...";
-
+            btn.disabled = true; btn.innerText = "Processando...";
             const campos = {
-                AD_OBSINT: document.getElementById('obs_AD_OBSINT').value,
                 AD_OBSINTERNA: document.getElementById('obs_AD_OBSINTERNA').value,
                 AD_OBSPCP: document.getElementById('obs_AD_OBSPCP').value,
+                AD_OBSINT: document.getElementById('obs_AD_OBSINT').value,
                 AD_OBSFINANCEIRO: document.getElementById('obs_AD_OBSFINANCEIRO').value,
                 AD_OBSFATURAMENTO: document.getElementById('obs_AD_OBSFATURAMENTO').value
             };
-
             try {
                 const res = await fetch(`${API_BASE}/update`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        jsessionid: session.id,
-                        cookies: session.cookies,
-                        nuNota: session.currentNuNota,
-                        campos: campos
-                    })
+                    body: JSON.stringify({ jsessionid: session.id, cookies: session.cookies, nuNota: session.currentNuNota, campos })
                 });
                 const result = await res.json();
-                if (result.success) alert("✅ Dados atualizados no Sankhya!");
-                else alert("❌ Erro ao salvar.");
-            } catch (e) { alert("Erro de conexão."); }
-            finally { btn.disabled = false; btn.innerText = "💾 Salvar Alterações"; }
+                if (result.success) alert("✅ Sucesso! Os campos foram atualizados no Sankhya.");
+                else alert("❌ Erro ao salvar: " + result.error);
+            } catch (e) { alert("Erro de comunicação."); }
+            finally { btn.disabled = false; btn.innerText = "💾 Salvar no Sankhya"; }
         }
     </script>
 </body>
