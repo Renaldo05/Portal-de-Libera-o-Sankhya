@@ -3,130 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sankhya - Consulta por NUNOTA</title>
+    <title>Portal de Consultas Sankhya</title>
     <style>
-        /* Mantive seu estilo original e adicionei o estilo do input */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-        h1 { color: #333; margin-bottom: 20px; }
-        .search-box { display: flex; gap: 10px; margin-bottom: 30px; }
-        input { flex: 1; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; transition: border-color 0.3s; }
-        input:focus { border-color: #667eea; }
-        button { background: #667eea; color: white; border: none; padding: 15px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #5a6fd1; }
-        .secondary { background: #f5576c; }
-        .status { padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 500; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: 100%; max-width: 500px; }
+        .hidden { display: none !important; }
+        h1 { color: #333; margin-bottom: 20px; font-size: 24px; text-align: center; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #eee; border-radius: 8px; outline: none; font-size: 16px; }
+        input:focus { border-color: #1a2a6c; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; background: #1a2a6c; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; margin-bottom: 10px; }
+        button:hover { background: #b21f1f; }
+        .secondary { background: #666; }
+        .status { padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; text-align: center; }
         .loading { background: #fff3cd; color: #856404; }
-        .success { background: #d4edda; color: #155724; }
         .error { background: #f8d7da; color: #721c24; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background: #667eea; color: white; padding: 12px; text-align: left; }
-        td { padding: 12px; border-bottom: 1px solid #eee; }
+        .success { background: #d4edda; color: #155724; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        th { background: #f4f4f4; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <h1>🔍 Consulta de Pedido Único</h1>
-        
-        <div class="search-box">
-            <input type="number" id="nuNotaInput" placeholder="Digite o NUNOTA do pedido...">
-            <button id="executeBtn" onclick="executeWorkflow()">Pesquisar</button>
-            <button class="secondary" onclick="clearResults()">Limpar</button>
+        <div id="loginSection">
+            <h1>🔐 Acesso Sankhya</h1>
+            <div id="loginStatus"></div>
+            <input type="text" id="userInput" placeholder="Usuário (CPF)">
+            <input type="password" id="passInput" placeholder="Senha">
+            <button id="loginBtn" onclick="handleLogin()">Entrar no Sistema</button>
         </div>
 
-        <div id="statusContainer"></div>
-        <div id="resultsContainer"></div>
+        <div id="mainSection" class="hidden">
+            <h1>🔍 Consultar Pedido</h1>
+            <input type="number" id="nuNotaInput" placeholder="Digite o NUNOTA">
+            <button id="searchBtn" onclick="executeWorkflow()">Pesquisar</button>
+            <button class="secondary" onclick="location.reload()">Sair</button>
+            
+            <div id="statusContainer"></div>
+            <div id="resultsContainer"></div>
+        </div>
     </div>
 
     <script>
         const API_BASE = '/api';
-        let savedCookies = null;
+        let session = { id: null, cookies: null };
 
-        async function executeWorkflow() {
-            const nuNota = document.getElementById('nuNotaInput').value;
-            const btn = document.getElementById('executeBtn');
+        async function handleLogin() {
+            const user = document.getElementById('userInput').value;
+            const password = document.getElementById('passInput').value;
+            const btn = document.getElementById('loginBtn');
+            const status = document.getElementById('loginStatus');
 
-            if (!nuNota) {
-                showStatus('error', '⚠️ Por favor, digite um NUNOTA para pesquisar.');
+            if (!user || !password) {
+                status.innerHTML = `<div class="status error">Preencha todos os campos!</div>`;
                 return;
             }
 
             btn.disabled = true;
-            document.getElementById('resultsContainer').innerHTML = '';
+            status.innerHTML = `<div class="status loading">Validando acesso...</div>`;
 
             try {
-                // PASSO 1: LOGIN
-                showStatus('loading', 'Autenticando no Sankhya...');
-                const loginRes = await fetch(`${API_BASE}/login`, { method: 'POST' });
-                const loginData = await loginRes.json();
-
-                if (!loginData.success) throw new Error('Falha no login');
-                
-                const jsessionid = loginData.data.responseBody?.jsessionid?.$;
-                savedCookies = loginData.cookies;
-
-                // PASSO 2: CONSULTA FILTRADA
-                showStatus('loading', `Buscando pedido ${nuNota}...`);
-                const queryRes = await fetch(`${API_BASE}/query`, {
+                const res = await fetch(`${API_BASE}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        jsessionid: jsessionid,
-                        cookies: savedCookies,
-                        nuNota: nuNota
-                    })
+                    body: JSON.stringify({ user, password })
                 });
 
-                const queryData = await queryRes.json();
-                
-                if (queryData.data.responseBody?.rows?.length === 0) {
-                    showStatus('error', '❌ Pedido não encontrado.');
-                } else {
-                    showStatus('success', '✅ Pedido localizado!');
-                    displayResults(queryData.data);
-                }
+                const result = await res.json();
 
-            } catch (error) {
-                showStatus('error', 'Erro: ' + error.message);
+                if (result.success) {
+                    session.id = result.data.responseBody.jsessionid.$;
+                    session.cookies = result.cookies;
+                    
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('mainSection').classList.remove('hidden');
+                } else {
+                    status.innerHTML = `<div class="status error">${result.error}</div>`;
+                }
+            } catch (e) {
+                status.innerHTML = `<div class="status error">Erro de conexão com o servidor.</div>`;
             } finally {
                 btn.disabled = false;
             }
         }
 
-        function displayResults(response) {
-            const row = response.responseBody.rows[0]; // Pegamos apenas a primeira linha
-            let html = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>NUNOTA</th>
-                            <th>DT. NEGOCIAÇÃO</th>
-                            <th>VALOR NOTA</th>
-                            <th>COD. PARCEIRO</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>${row[0]}</strong></td>
-                            <td>${row[1]}</td>
-                            <td style="color: green; font-weight: bold;">R$ ${parseFloat(row[2]).toFixed(2)}</td>
-                            <td>${row[3]}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            `;
-            document.getElementById('resultsContainer').innerHTML = html;
-        }
+        async function executeWorkflow() {
+            const nuNota = document.getElementById('nuNotaInput').value;
+            const results = document.getElementById('resultsContainer');
+            const status = document.getElementById('statusContainer');
 
-        function showStatus(type, message) {
-            document.getElementById('statusContainer').innerHTML = `<div class="status ${type}">${message}</div>`;
-        }
+            if (!nuNota) return;
 
-        function clearResults() {
-            document.getElementById('statusContainer').innerHTML = '';
-            document.getElementById('resultsContainer').innerHTML = '';
-            document.getElementById('nuNotaInput').value = '';
+            results.innerHTML = '';
+            status.innerHTML = `<div class="status loading">Buscando pedido...</div>`;
+
+            try {
+                const res = await fetch(`${API_BASE}/query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsessionid: session.id,
+                        cookies: session.cookies,
+                        nuNota: nuNota
+                    })
+                });
+
+                const queryData = await res.json();
+                const rows = queryData.data.responseBody?.rows || [];
+
+                if (rows.length === 0) {
+                    status.innerHTML = `<div class="status error">Pedido não encontrado.</div>`;
+                } else {
+                    status.innerHTML = `<div class="status success">Sucesso!</div>`;
+                    const row = rows[0];
+                    results.innerHTML = `
+                        <table>
+                            <tr><th>NUNOTA</th><td>${row[0]}</td></tr>
+                            <tr><th>DATA</th><td>${row[1]}</td></tr>
+                            <tr><th>VALOR</th><td style="color:green;font-weight:bold">R$ ${parseFloat(row[2]).toFixed(2)}</td></tr>
+                            <tr><th>PARCEIRO</th><td>${row[3]}</td></tr>
+                        </table>
+                    `;
+                }
+            } catch (e) {
+                status.innerHTML = `<div class="status error">Erro ao consultar.</div>`;
+            }
         }
     </script>
 </body>
