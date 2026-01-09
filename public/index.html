@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Portal Liberador Mobile</title>
+    <title>Portal Liberador</title>
     <style>
         :root { --primary: #1a2a6c; --success: #27ae60; --bg: #f4f7f6; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, system-ui, sans-serif; }
@@ -16,8 +16,7 @@
         .card-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .nu-nota { font-weight: bold; color: var(--primary); font-size: 18px; }
         .valor { font-weight: bold; color: var(--success); font-size: 18px; }
-        .detalhe { font-size: 14px; color: #666; margin-bottom: 3px; }
-        button { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
+        button { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
         .btn-login { background: var(--primary); color: white; }
         .btn-liberar { background: var(--success); color: white; margin-top: 10px; }
         .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
@@ -37,7 +36,7 @@
 
         <div id="mainSection" class="hidden">
             <h3 style="margin-bottom: 5px; color: var(--primary);">Pendentes</h3>
-            <p id="userInfo" style="font-size: 12px; color: #999; margin-bottom: 15px;"></p>
+            <p id="userInfo" style="font-size: 12px; color: #999; margin-bottom: 15px;">Validando ID...</p>
             <div id="listContainer"></div>
             <button style="background:none; color: #999; margin-top: 20px;" onclick="location.reload()">Sair</button>
         </div>
@@ -47,7 +46,7 @@
         <div class="modal-content">
             <h3>Simular Liberação</h3>
             <textarea id="obsTesteInput" placeholder="Observação..."></textarea>
-            <button class="btn-liberar" id="confirmBtn" onclick="confirmarLiberacao()">Confirmar</button>
+            <button class="btn-liberar" onclick="confirmarLiberacao()">Confirmar</button>
             <button style="background:none; color: #666; margin-top: 10px;" onclick="fecharModal()">Cancelar</button>
         </div>
     </div>
@@ -59,8 +58,6 @@
         async function handleLogin() {
             const user = document.getElementById('userInput').value;
             const password = document.getElementById('passInput').value;
-            const statusDiv = document.getElementById('loginStatus');
-
             try {
                 const res = await fetch(`${API_BASE}/login`, {
                     method: 'POST',
@@ -68,41 +65,42 @@
                     body: JSON.stringify({ user, password })
                 });
                 const result = await res.json();
-                
                 if (result.success) {
                     session.id = result.data.responseBody.jsessionid.$;
                     session.cookies = result.cookies;
-                    session.codUsu = result.codUsuLogado;
                     
-                    document.getElementById('userInfo').innerText = "Liberador ID: " + session.codUsu;
                     document.getElementById('loginSection').classList.add('hidden');
                     document.getElementById('mainSection').classList.remove('hidden');
+
+                    // Se o ID for 'OQ==' ou similar, vamos buscar o real
+                    const resId = await fetch(`${API_BASE}/get-user-id`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ jsessionid: session.id, cookies: session.cookies })
+                    });
+                    const idData = await resId.json();
+                    session.codUsu = idData.realId || 9; // Fallback para 9 se tudo falhar
+
+                    document.getElementById('userInfo').innerText = "Liberador ID: " + session.codUsu;
                     carregarLiberacoes();
                 } else {
-                    statusDiv.innerHTML = `<p style="color:red; margin-bottom:10px;">${result.error}</p>`;
+                    document.getElementById('loginStatus').innerHTML = `<p style="color:red;">${result.error}</p>`;
                 }
-            } catch (e) { alert("Erro ao conectar."); }
+            } catch (e) { alert("Erro de conexão."); }
         }
 
         async function carregarLiberacoes() {
             const container = document.getElementById('listContainer');
-            container.innerHTML = "<p>Buscando fila...</p>";
-
+            container.innerHTML = "Buscando pedidos...";
             try {
                 const res = await fetch(`${API_BASE}/liberacoes`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        jsessionid: session.id, 
-                        cookies: session.cookies, 
-                        codUsuLogado: session.codUsu 
-                    })
+                    body: JSON.stringify({ jsessionid: session.id, cookies: session.cookies, codUsuLogado: session.codUsu })
                 });
                 const result = await res.json();
                 const rows = result.data.responseBody?.rows || [];
-
                 container.innerHTML = rows.length === 0 ? "Fila vazia." : "";
-
                 rows.forEach(row => {
                     container.innerHTML += `
                         <div class="card">
@@ -110,47 +108,28 @@
                                 <span class="nu-nota">#${row[0]}</span>
                                 <span class="valor">R$ ${parseFloat(row[3]).toLocaleString('pt-BR')}</span>
                             </div>
-                            <div class="detalhe"><strong>${row[2]}</strong></div>
-                            <div class="detalhe">${row[1]}</div>
-                            <div class="detalhe">Solicitante: ${row[9]}</div>
+                            <div style="font-size:14px;"><strong>${row[2]}</strong></div>
+                            <div style="font-size:14px; color:#666;">${row[1]}</div>
                             <button class="btn-liberar" onclick="abrirModal(${row[0]})">Liberar</button>
-                        </div>
-                    `;
+                        </div>`;
                 });
-            } catch (e) { container.innerHTML = "Erro ao carregar fila."; }
+            } catch (e) { container.innerHTML = "Erro ao carregar."; }
         }
 
-        function abrirModal(nuNota) {
-            session.currentNuNota = nuNota;
-            document.getElementById('modalTeste').classList.remove('hidden');
-        }
-
+        function abrirModal(nuNota) { session.currentNuNota = nuNota; document.getElementById('modalTeste').classList.remove('hidden'); }
         function fecharModal() { document.getElementById('modalTeste').classList.add('hidden'); }
 
         async function confirmarLiberacao() {
             const obs = document.getElementById('obsTesteInput').value;
-            const btn = document.getElementById('confirmBtn');
-            btn.disabled = true; btn.innerText = "Salvando...";
-
             try {
                 const res = await fetch(`${API_BASE}/teste-liberar`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        jsessionid: session.id,
-                        cookies: session.cookies,
-                        nuNota: session.currentNuNota,
-                        obsTeste: obs
-                    })
+                    body: JSON.stringify({ jsessionid: session.id, cookies: session.cookies, nuNota: session.currentNuNota, obsTeste: obs })
                 });
                 const result = await res.json();
-                if (result.success) {
-                    alert("Sucesso!");
-                    fecharModal();
-                    carregarLiberacoes();
-                } else { alert("Erro ao gravar: " + result.error); }
-            } catch (e) { alert("Erro de conexão."); }
-            finally { btn.disabled = false; btn.innerText = "Confirmar"; }
+                if (result.success) { alert("Sucesso!"); fecharModal(); carregarLiberacoes(); }
+            } catch (e) { alert("Erro ao gravar."); }
         }
     </script>
 </body>

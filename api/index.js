@@ -26,22 +26,22 @@ app.post('/api/login', async (req, res) => {
 
         const cookies = response.headers.raw()['set-cookie'];
         
-        // Tenta capturar o CODUSU numérico em diferentes campos retornados
-        const codUsu = data.responseBody?.idUsu?.$ || data.responseBody?.userId?.$ || data.responseBody?.idusu?.$ || null;
+        // Captura o ID (que pode vir como 'OQ==')
+        const rawId = data.responseBody?.idUsu?.$ || data.responseBody?.userId?.$ || null;
 
-        res.json({ success: true, data, cookies, codUsuLogado: codUsu });
+        res.json({ success: true, data, cookies, codUsuLogado: rawId });
     } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
-// FILA DE LIBERAÇÃO
-app.post('/api/liberacoes', async (req, res) => {
+// BUSCA O CODUSU REAL (Caso o login retorne Token/Base64)
+app.post('/api/get-user-id', async (req, res) => {
     try {
-        const { jsessionid, cookies, codUsuLogado } = req.body;
+        const { jsessionid, cookies } = req.body;
         const headers = { 'Content-Type': 'application/json', 'appkey': APP_KEY };
         if (cookies) headers['Cookie'] = cookies.join('; ');
 
-        // SQL em linha única para evitar ORA-00933
-        const sql = `SELECT LIB.NUCHAVE, TOP.DESCROPER, PAR.RAZAOSOCIAL, CAB.VLRNOTA, LIB.TABELA, LIB.VLRATUAL, LIB.DHSOLICIT, LIB.OBSERVACAO, LIB.EVENTO, USUSOL.NOMEUSU FROM TSILIB LIB JOIN TSIUSU USUSOL ON USUSOL.CODUSU = LIB.CODUSUSOLICIT JOIN TGFCAB CAB ON CAB.NUNOTA = LIB.NUCHAVE JOIN TGFPAR PAR ON PAR.CODPARC = CAB.CODPARC JOIN TGFTOP TOP ON TOP.CODTIPOPER = CAB.CODTIPOPER AND TOP.DHALTER = CAB.DHTIPOPER WHERE LIB.CODUSULIB = ${codUsuLogado} AND LIB.VLRLIBERADO <> LIB.VLRATUAL ORDER BY LIB.DHSOLICIT DESC`;
+        // Busca o código do usuário da sessão atual
+        const sql = `SELECT CODUSU FROM TSIUSU WHERE CODUSU = STP_GET_CODUSULOGADO`;
 
         const response = await fetch(`${BASE_URL}?serviceName=DbExplorerSP.executeQuery&outputType=json&mgeSession=${jsessionid}`, {
             method: 'POST',
@@ -49,17 +49,36 @@ app.post('/api/liberacoes', async (req, res) => {
             body: JSON.stringify({ "serviceName": "DbExplorerSP.executeQuery", "requestBody": { "sql": sql } })
         });
         const data = await response.json();
+        const realId = data.responseBody?.rows?.[0]?.[0];
+        res.json({ success: true, realId });
+    } catch (error) { res.status(500).json({ success: false }); }
+});
+
+// FILA DE LIBERAÇÃO (SQL Ultra-Limpo)
+app.post('/api/liberacoes', async (req, res) => {
+    try {
+        const { jsessionid, cookies, codUsuLogado } = req.body;
+        const headers = { 'Content-Type': 'application/json', 'appkey': APP_KEY };
+        if (cookies) headers['Cookie'] = cookies.join('; ');
+
+        const sql = `SELECT LIB.NUCHAVE, TOP.DESCROPER, PAR.RAZAOSOCIAL, CAB.VLRNOTA, LIB.TABELA, LIB.VLRATUAL, LIB.DHSOLICIT, LIB.OBSERVACAO, LIB.EVENTO, USUSOL.NOMEUSU FROM TSILIB LIB JOIN TSIUSU USUSOL ON USUSOL.CODUSU = LIB.CODUSUSOLICIT JOIN TGFCAB CAB ON CAB.NUNOTA = LIB.NUCHAVE JOIN TGFPAR PAR ON PAR.CODPARC = CAB.CODPARC JOIN TGFTOP TOP ON TOP.CODTIPOPER = CAB.CODTIPOPER AND TOP.DHALTER = CAB.DHTIPOPER WHERE LIB.CODUSULIB = ${parseInt(codUsuLogado)} AND LIB.VLRLIBERADO <> LIB.VLRATUAL ORDER BY LIB.DHSOLICIT DESC`;
+
+        const response = await fetch(`${BASE_URL}?serviceName=DbExplorerSP.executeQuery&outputType=json&mgeSession=${jsessionid}`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({ "serviceName": "DbExplorerSP.executeQuery", "requestBody": { "sql": sql.trim() } })
+        });
+        const data = await response.json();
         res.json({ success: true, data });
     } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
-// SIMULAR LIBERAÇÃO (CRUD)
+// UPDATE DE TESTE
 app.post('/api/teste-liberar', async (req, res) => {
     try {
         const { jsessionid, cookies, nuNota, obsTeste } = req.body;
         const headers = { 'Content-Type': 'application/json', 'appkey': APP_KEY };
         if (cookies) headers['Cookie'] = cookies.join('; ');
-
         const requestBody = {
             serviceName: "CRUDServiceProvider.saveRecord",
             requestBody: {
@@ -73,7 +92,6 @@ app.post('/api/teste-liberar', async (req, res) => {
                 }
             }
         };
-
         const response = await fetch(`${BASE_URL}?serviceName=CRUDServiceProvider.saveRecord&outputType=json&mgeSession=${jsessionid}`, {
             method: 'POST', headers: headers, body: JSON.stringify(requestBody)
         });
