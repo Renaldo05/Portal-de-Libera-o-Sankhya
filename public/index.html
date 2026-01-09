@@ -5,65 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Portal Liberador Mobile</title>
     <style>
-        :root { --primary: #1a2a6c; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        
-        body { background: var(--bg); padding: 10px; color: #333; }
+        :root { --primary: #1a2a6c; --success: #27ae60; --bg: #f4f7f6; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, system-ui, sans-serif; }
+        body { background: var(--bg); padding: 10px; }
         .hidden { display: none !important; }
+        .container { max-width: 500px; margin: 0 auto; }
+        
+        /* Login UI */
+        .login-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 50px; text-align: center; }
+        input { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; outline: none; }
+        
+        /* Card UI */
+        .card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 6px solid #f1c40f; }
+        .card-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .nu-nota { font-weight: bold; color: var(--primary); font-size: 18px; }
+        .valor { font-weight: bold; color: var(--success); font-size: 18px; }
+        .detalhe { font-size: 14px; color: #666; margin-bottom: 3px; }
 
-        /* Container Principal */
-        .app-container { max-width: 500px; margin: 0 auto; }
-
-        /* Login */
-        .login-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 50px; text-align: center; }
-        input { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; }
-
-        /* Cards de Liberação */
-        .card-lib { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 6px solid #f1c40f; animation: fadeIn 0.3s ease; }
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-        .nu-nota { font-weight: 800; font-size: 18px; color: var(--primary); }
-        .vlr-nota { font-weight: 800; font-size: 18px; color: var(--success); }
-        .info-row { font-size: 14px; margin-bottom: 4px; color: #666; }
-        .solicitante { color: var(--primary); font-weight: 600; }
-
-        /* Botões */
-        button { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
-        .btn-main { background: var(--primary); color: white; }
-        .btn-action { background: var(--success); color: white; margin-top: 10px; }
-        .btn-logout { background: transparent; color: #999; margin-top: 20px; font-size: 14px; }
-
-        /* Modal Mobile */
+        /* Buttons */
+        button { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
+        .btn-login { background: var(--primary); color: white; }
+        .btn-liberar { background: var(--success); color: white; margin-top: 10px; }
+        
+        /* Modal */
         .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-        .modal-content { background: white; padding: 20px; border-radius: 20px; width: 100%; max-width: 400px; }
-        textarea { width: 100%; height: 100px; border: 1px solid #ddd; border-radius: 10px; padding: 10px; margin: 10px 0; font-size: 16px; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-content { background: white; padding: 20px; border-radius: 20px; width: 100%; }
+        textarea { width: 100%; height: 100px; border: 1px solid #ddd; border-radius: 12px; padding: 10px; margin: 10px 0; font-size: 16px; }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
+    <div class="container">
         <div id="loginSection" class="login-card">
-            <h2 style="margin-bottom: 20px;">Portal Liberador</h2>
+            <h2>Portal Liberador</h2>
+            <p style="color: #666; margin-bottom: 20px;">Acesso Restrito</p>
             <div id="loginStatus"></div>
-            <input type="text" id="userInput" placeholder="Usuário (CPF)">
+            <input type="text" id="userInput" placeholder="Usuário">
             <input type="password" id="passInput" placeholder="Senha">
-            <button class="btn-main" onclick="handleLogin()">Entrar</button>
+            <button class="btn-login" onclick="handleLogin()">Entrar</button>
         </div>
 
         <div id="mainSection" class="hidden">
-            <h3 id="welcomeMsg" style="margin-bottom: 15px; color: var(--primary);">Pendentes</h3>
+            <h3 style="margin-bottom: 15px; color: var(--primary);">Pendentes para você</h3>
             <div id="listContainer"></div>
-            <button class="btn-logout" onclick="location.reload()">Sair do Sistema</button>
+            <button style="background:none; color: #999;" onclick="location.reload()">Sair do Sistema</button>
         </div>
     </div>
 
     <div id="modalTeste" class="modal hidden">
         <div class="modal-content">
-            <h3 id="modalNuNota">Liberar Pedido</h3>
-            <textarea id="obsTesteInput" placeholder="Observação da liberação..."></textarea>
-            <button class="btn-action" onclick="confirmarLiberacaoTeste()">Confirmar Liberação</button>
-            <button style="background:none; color: #666; margin-top: 5px;" onclick="fecharModal()">Cancelar</button>
+            <h3 id="modalTitle">Liberar Pedido</h3>
+            <textarea id="obsTesteInput" placeholder="Sua observação de teste..."></textarea>
+            <button class="btn-liberar" onclick="confirmarLiberacao()">Confirmar Simulação</button>
+            <button style="background:none; color: #666; margin-top: 10px;" onclick="fecharModal()">Cancelar</button>
         </div>
     </div>
 
@@ -74,7 +68,7 @@
         async function handleLogin() {
             const user = document.getElementById('userInput').value;
             const password = document.getElementById('passInput').value;
-            const status = document.getElementById('loginStatus');
+            const statusDiv = document.getElementById('loginStatus');
 
             try {
                 const res = await fetch(`${API_BASE}/login`, {
@@ -84,6 +78,8 @@
                 });
                 const result = await res.json();
                 
+                console.log("Resposta do Login:", result); // Debug no console
+
                 if (result.success) {
                     session.id = result.data.responseBody.jsessionid.$;
                     session.cookies = result.cookies;
@@ -93,9 +89,12 @@
                     document.getElementById('mainSection').classList.remove('hidden');
                     carregarLiberacoes();
                 } else {
-                    status.innerHTML = `<p style="color:red; margin-bottom:10px;">${result.error}</p>`;
+                    statusDiv.innerHTML = `<p style="color:red; margin-bottom:10px;">${result.error}</p>`;
                 }
-            } catch (e) { alert("Erro de conexão."); }
+            } catch (e) { 
+                console.error(e);
+                alert("Erro ao conectar com o servidor."); 
+            }
         }
 
         async function carregarLiberacoes() {
@@ -106,26 +105,28 @@
                 const res = await fetch(`${API_BASE}/liberacoes`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ jsessionid: session.id, cookies: session.cookies, codUsuLogado: session.codUsu })
+                    body: JSON.stringify({ 
+                        jsessionid: session.id, 
+                        cookies: session.cookies, 
+                        codUsuLogado: session.codUsu 
+                    })
                 });
                 const result = await res.json();
-                const rows = result.data.responseBody.rows || [];
+                const rows = result.data.responseBody?.rows || [];
 
-                container.innerHTML = rows.length === 0 ? "<p>Nenhum pedido pendente!</p>" : "";
+                container.innerHTML = rows.length === 0 ? "<p>Nada pendente para você.</p>" : "";
 
                 rows.forEach(row => {
-                    const dataFormatada = row[5]; 
                     container.innerHTML += `
-                        <div class="card-lib">
+                        <div class="card">
                             <div class="card-header">
                                 <span class="nu-nota">#${row[0]}</span>
-                                <span class="vlr-nota">R$ ${parseFloat(row[3]).toLocaleString('pt-BR')}</span>
+                                <span class="valor">R$ ${parseFloat(row[3]).toLocaleString('pt-BR')}</span>
                             </div>
-                            <div class="info-row"><strong>${row[2]}</strong></div>
-                            <div class="info-row">${row[1]}</div>
-                            <div class="info-row">Solicitante: <span class="solicitante">${row[8]}</span></div>
-                            <div class="info-row" style="font-style: italic; margin-top:5px;">"${row[6] || 'Sem observação'}"</div>
-                            <button class="btn-action" onclick="abrirModal(${row[0]})">Liberar Pedido</button>
+                            <div class="detalhe"><strong>${row[2]}</strong></div>
+                            <div class="detalhe">${row[1]}</div>
+                            <div class="detalhe">Solicitante: ${row[8]}</div>
+                            <button class="btn-liberar" onclick="abrirModal(${row[0]})">Liberar</button>
                         </div>
                     `;
                 });
@@ -134,16 +135,17 @@
 
         function abrirModal(nuNota) {
             session.currentNuNota = nuNota;
-            document.getElementById('modalNuNota').innerText = "Liberar Pedido #" + nuNota;
+            document.getElementById('modalTitle').innerText = "Simular Pedido #" + nuNota;
             document.getElementById('modalTeste').classList.remove('hidden');
         }
 
         function fecharModal() { document.getElementById('modalTeste').classList.add('hidden'); }
 
-        async function confirmarLiberacaoTeste() {
+        async function confirmarLiberacao() {
             const obs = document.getElementById('obsTesteInput').value;
-            const btn = document.querySelector('#modalTeste button');
-            btn.disabled = true; btn.innerText = "Gravando...";
+            const btn = document.querySelector('#modalTeste .btn-liberar');
+            btn.innerText = "Gravando...";
+            btn.disabled = true;
 
             try {
                 const res = await fetch(`${API_BASE}/teste-liberar`, {
@@ -158,12 +160,15 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    alert("Sucesso! A liberação foi simulada no Sankhya.");
+                    alert("Sucesso! Campo AD_TESTEAPLICATIVOLIBERACAO atualizado.");
                     fecharModal();
                     carregarLiberacoes();
                 } else { alert("Erro ao gravar: " + result.error); }
             } catch (e) { alert("Erro de conexão."); }
-            finally { btn.disabled = false; btn.innerText = "Confirmar Liberação"; }
+            finally { 
+                btn.innerText = "Confirmar Simulação"; 
+                btn.disabled = false; 
+            }
         }
     </script>
 </body>
