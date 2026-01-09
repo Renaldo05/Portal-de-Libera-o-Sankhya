@@ -64,7 +64,7 @@ app.post('/api/liberacoes', async (req, res) => {
             JOIN TGFPAR PAR ON PAR.CODPARC = CAB.CODPARC
             JOIN TGFTOP TOP ON TOP.CODTIPOPER = CAB.CODTIPOPER AND TOP.DHALTER = CAB.DHTIPOPER
             WHERE LIB.CODUSULIB = ${codUsuLogado} 
-            AND LIB.DHCONCLU IS NULL 
+            AND LIB.VLRLIBERADO <> LIB.VLRATUAL
             ORDER BY LIB.DHSOLICIT DESC
         `;
 
