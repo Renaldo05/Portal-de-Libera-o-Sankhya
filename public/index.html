@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Liberador Mobile</title>
+    <title>Portal Liberador Mobile</title>
     <style>
         :root { --primary: #1a2a6c; --success: #27ae60; --bg: #f4f7f6; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, system-ui, sans-serif; }
@@ -36,7 +36,7 @@
         </div>
 
         <div id="mainSection" class="hidden">
-            <h3 style="margin-bottom: 5px; color: var(--primary);">Sua Fila de Liberação</h3>
+            <h3 style="margin-bottom: 5px; color: var(--primary);">Pendentes</h3>
             <p id="userInfo" style="font-size: 12px; color: #999; margin-bottom: 15px;"></p>
             <div id="listContainer"></div>
             <button style="background:none; color: #999; margin-top: 20px;" onclick="location.reload()">Sair</button>
@@ -45,8 +45,8 @@
 
     <div id="modalTeste" class="modal hidden">
         <div class="modal-content">
-            <h3 id="modalTitle">Simular Liberação</h3>
-            <textarea id="obsTesteInput" placeholder="Digite uma observação..."></textarea>
+            <h3>Simular Liberação</h3>
+            <textarea id="obsTesteInput" placeholder="Observação..."></textarea>
             <button class="btn-liberar" id="confirmBtn" onclick="confirmarLiberacao()">Confirmar</button>
             <button style="background:none; color: #666; margin-top: 10px;" onclick="fecharModal()">Cancelar</button>
         </div>
@@ -69,26 +69,24 @@
                 });
                 const result = await res.json();
                 
-                console.log("Debug Login:", result);
-
                 if (result.success) {
                     session.id = result.data.responseBody.jsessionid.$;
                     session.cookies = result.cookies;
                     session.codUsu = result.codUsuLogado;
                     
-                    document.getElementById('userInfo').innerText = "Usuário ID: " + session.codUsu;
+                    document.getElementById('userInfo').innerText = "Liberador ID: " + session.codUsu;
                     document.getElementById('loginSection').classList.add('hidden');
                     document.getElementById('mainSection').classList.remove('hidden');
                     carregarLiberacoes();
                 } else {
                     statusDiv.innerHTML = `<p style="color:red; margin-bottom:10px;">${result.error}</p>`;
                 }
-            } catch (e) { alert("Erro de conexão."); }
+            } catch (e) { alert("Erro ao conectar."); }
         }
 
         async function carregarLiberacoes() {
             const container = document.getElementById('listContainer');
-            container.innerHTML = "<p>Buscando pedidos...</p>";
+            container.innerHTML = "<p>Buscando fila...</p>";
 
             try {
                 const res = await fetch(`${API_BASE}/liberacoes`, {
@@ -103,11 +101,9 @@
                 const result = await res.json();
                 const rows = result.data.responseBody?.rows || [];
 
-                container.innerHTML = rows.length === 0 ? "Nenhum pedido pendente para você." : "";
+                container.innerHTML = rows.length === 0 ? "Fila vazia." : "";
 
                 rows.forEach(row => {
-                    // Mapeamento dos índices do seu SELECT atualizado:
-                    // 0: NUCHAVE, 1: DESCROPER, 2: RAZAOSOCIAL, 3: VLRNOTA, 4: TABELA, 5: VLRATUAL, 6: DHSOLICIT, 7: OBSERVACAO, 8: EVENTO, 9: NOMEUSU
                     container.innerHTML += `
                         <div class="card">
                             <div class="card-header">
@@ -117,7 +113,6 @@
                             <div class="detalhe"><strong>${row[2]}</strong></div>
                             <div class="detalhe">${row[1]}</div>
                             <div class="detalhe">Solicitante: ${row[9]}</div>
-                            <div class="detalhe" style="font-style:italic">"${row[7] || ''}"</div>
                             <button class="btn-liberar" onclick="abrirModal(${row[0]})">Liberar</button>
                         </div>
                     `;
@@ -135,7 +130,7 @@
         async function confirmarLiberacao() {
             const obs = document.getElementById('obsTesteInput').value;
             const btn = document.getElementById('confirmBtn');
-            btn.disabled = true; btn.innerText = "Gravando...";
+            btn.disabled = true; btn.innerText = "Salvando...";
 
             try {
                 const res = await fetch(`${API_BASE}/teste-liberar`, {
@@ -150,7 +145,7 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    alert("Simulação de liberação gravada no pedido " + session.currentNuNota);
+                    alert("Sucesso!");
                     fecharModal();
                     carregarLiberacoes();
                 } else { alert("Erro ao gravar: " + result.error); }

@@ -9,7 +9,7 @@ app.use(express.json());
 const APP_KEY = 'a17c5048-ce8a-4f6f-b6e2-90ef06a38439';
 const BASE_URL = 'https://rendicolla.sankhyacloud.com.br/mge/service.sbr';
 
-// LOGIN: Captura o ID do usuário de forma robusta
+// LOGIN
 app.post('/api/login', async (req, res) => {
     try {
         const { user, password } = req.body;
@@ -26,36 +26,22 @@ app.post('/api/login', async (req, res) => {
 
         const cookies = response.headers.raw()['set-cookie'];
         
-        // Tenta capturar o ID em diferentes locais da resposta do Sankhya
-        const codUsu = data.responseBody?.userId?.$ || 
-                       data.responseBody?.idUsu?.$ || 
-                       data.responseBody?.CODUSU?.$ || 
-                       data.responseBody?.callID?.$; // Fallback para versões específicas
+        // Tenta capturar o CODUSU numérico em diferentes campos retornados
+        const codUsu = data.responseBody?.idUsu?.$ || data.responseBody?.userId?.$ || data.responseBody?.idusu?.$ || null;
 
         res.json({ success: true, data, cookies, codUsuLogado: codUsu });
     } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
-// FILA DE LIBERAÇÃO: SQL Corrigido conforme seu teste no DbExplorer
+// FILA DE LIBERAÇÃO
 app.post('/api/liberacoes', async (req, res) => {
     try {
         const { jsessionid, cookies, codUsuLogado } = req.body;
         const headers = { 'Content-Type': 'application/json', 'appkey': APP_KEY };
         if (cookies) headers['Cookie'] = cookies.join('; ');
 
-        const sql = `
-            SELECT 
-                LIB.NUCHAVE, TOP.DESCROPER, PAR.RAZAOSOCIAL, CAB.VLRNOTA, LIB.TABELA,
-                LIB.VLRATUAL, LIB.DHSOLICIT, LIB.OBSERVACAO, LIB.EVENTO, USUSOL.NOMEUSU
-            FROM TSILIB LIB
-            JOIN TSIUSU USUSOL ON USUSOL.CODUSU = LIB.CODUSUSOLICIT
-            JOIN TGFCAB CAB ON CAB.NUNOTA = LIB.NUCHAVE
-            JOIN TGFPAR PAR ON PAR.CODPARC = CAB.CODPARC
-            JOIN TGFTOP TOP ON TOP.CODTIPOPER = CAB.CODTIPOPER AND TOP.DHALTER = CAB.DHTIPOPER
-            WHERE LIB.CODUSULIB = ${codUsuLogado} 
-            AND LIB.VLRLIBERADO <> LIB.VLRATUAL
-            ORDER BY LIB.DHSOLICIT DESC
-        `;
+        // SQL em linha única para evitar ORA-00933
+        const sql = `SELECT LIB.NUCHAVE, TOP.DESCROPER, PAR.RAZAOSOCIAL, CAB.VLRNOTA, LIB.TABELA, LIB.VLRATUAL, LIB.DHSOLICIT, LIB.OBSERVACAO, LIB.EVENTO, USUSOL.NOMEUSU FROM TSILIB LIB JOIN TSIUSU USUSOL ON USUSOL.CODUSU = LIB.CODUSUSOLICIT JOIN TGFCAB CAB ON CAB.NUNOTA = LIB.NUCHAVE JOIN TGFPAR PAR ON PAR.CODPARC = CAB.CODPARC JOIN TGFTOP TOP ON TOP.CODTIPOPER = CAB.CODTIPOPER AND TOP.DHALTER = CAB.DHTIPOPER WHERE LIB.CODUSULIB = ${codUsuLogado} AND LIB.VLRLIBERADO <> LIB.VLRATUAL ORDER BY LIB.DHSOLICIT DESC`;
 
         const response = await fetch(`${BASE_URL}?serviceName=DbExplorerSP.executeQuery&outputType=json&mgeSession=${jsessionid}`, {
             method: 'POST',
@@ -67,7 +53,7 @@ app.post('/api/liberacoes', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
-// UPDATE DE TESTE (Simulação de Liberação)
+// SIMULAR LIBERAÇÃO (CRUD)
 app.post('/api/teste-liberar', async (req, res) => {
     try {
         const { jsessionid, cookies, nuNota, obsTeste } = req.body;
