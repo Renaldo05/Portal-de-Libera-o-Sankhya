@@ -9,7 +9,7 @@ app.use(express.json());
 const APP_KEY = 'a17c5048-ce8a-4f6f-b6e2-90ef06a38439';
 const BASE_URL = 'https://rendicolla.sankhyacloud.com.br/mge/service.sbr';
 
-// LOGIN: Busca o jsessionid e o código do usuário
+// LOGIN: Captura o ID do usuário de forma robusta
 app.post('/api/login', async (req, res) => {
     try {
         const { user, password } = req.body;
@@ -18,36 +18,25 @@ app.post('/api/login', async (req, res) => {
             headers: { 'Content-Type': 'application/json', 'appkey': APP_KEY },
             body: JSON.stringify({
                 "serviceName": "MobileLoginSP.login",
-                "requestBody": { 
-                    "NOMUSU": { "$": user }, 
-                    "INTERNO": { "$": password }, 
-                    "KEEPCONNECTED": { "$": "S" } 
-                }
+                "requestBody": { "NOMUSU": { "$": user }, "INTERNO": { "$": password }, "KEEPCONNECTED": { "$": "S" } }
             })
         });
         const data = await response.json();
-        
-        if (data.status !== "1") {
-            return res.status(401).json({ success: false, error: data.statusMessage });
-        }
+        if (data.status !== "1") return res.status(401).json({ success: false, error: data.statusMessage });
 
         const cookies = response.headers.raw()['set-cookie'];
         
-        // Tentativa de pegar o ID do usuário de diferentes formas (prevenção de erro)
-        const codUsu = data.responseBody?.userId?.$ || data.responseBody?.idUsu?.$ || null;
+        // Tenta capturar o ID em diferentes locais da resposta do Sankhya
+        const codUsu = data.responseBody?.userId?.$ || 
+                       data.responseBody?.idUsu?.$ || 
+                       data.responseBody?.CODUSU?.$ || 
+                       data.responseBody?.callID?.$; // Fallback para versões específicas
 
-        res.json({ 
-            success: true, 
-            data: data, 
-            cookies: cookies, 
-            codUsuLogado: codUsu 
-        });
-    } catch (error) { 
-        res.status(500).json({ success: false, error: error.message }); 
-    }
+        res.json({ success: true, data, cookies, codUsuLogado: codUsu });
+    } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
-// FILA DE LIBERAÇÃO
+// FILA DE LIBERAÇÃO: SQL Corrigido conforme seu teste no DbExplorer
 app.post('/api/liberacoes', async (req, res) => {
     try {
         const { jsessionid, cookies, codUsuLogado } = req.body;
@@ -56,7 +45,7 @@ app.post('/api/liberacoes', async (req, res) => {
 
         const sql = `
             SELECT 
-                LIB.NUCHAVE, TOP.DESCROPER, PAR.RAZAOSOCIAL, CAB.VLRNOTA, 
+                LIB.NUCHAVE, TOP.DESCROPER, PAR.RAZAOSOCIAL, CAB.VLRNOTA, LIB.TABELA,
                 LIB.VLRATUAL, LIB.DHSOLICIT, LIB.OBSERVACAO, LIB.EVENTO, USUSOL.NOMEUSU
             FROM TSILIB LIB
             JOIN TSIUSU USUSOL ON USUSOL.CODUSU = LIB.CODUSUSOLICIT
@@ -71,17 +60,14 @@ app.post('/api/liberacoes', async (req, res) => {
         const response = await fetch(`${BASE_URL}?serviceName=DbExplorerSP.executeQuery&outputType=json&mgeSession=${jsessionid}`, {
             method: 'POST',
             headers: headers,
-            body: JSON.stringify({ 
-                "serviceName": "DbExplorerSP.executeQuery", 
-                "requestBody": { "sql": sql } 
-            })
+            body: JSON.stringify({ "serviceName": "DbExplorerSP.executeQuery", "requestBody": { "sql": sql } })
         });
         const data = await response.json();
         res.json({ success: true, data });
     } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
-// SIMULAÇÃO DE LIBERAÇÃO (CRUD)
+// UPDATE DE TESTE (Simulação de Liberação)
 app.post('/api/teste-liberar', async (req, res) => {
     try {
         const { jsessionid, cookies, nuNota, obsTeste } = req.body;

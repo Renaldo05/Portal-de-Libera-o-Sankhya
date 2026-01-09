@@ -3,42 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Portal Liberador Mobile</title>
+    <title>Liberador Mobile</title>
     <style>
         :root { --primary: #1a2a6c; --success: #27ae60; --bg: #f4f7f6; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, system-ui, sans-serif; }
         body { background: var(--bg); padding: 10px; }
         .hidden { display: none !important; }
         .container { max-width: 500px; margin: 0 auto; }
-        
-        /* Login UI */
         .login-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 50px; text-align: center; }
         input { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; outline: none; }
-        
-        /* Card UI */
-        .card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 6px solid #f1c40f; }
+        .card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; border-left: 6px solid #f1c40f; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .card-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .nu-nota { font-weight: bold; color: var(--primary); font-size: 18px; }
         .valor { font-weight: bold; color: var(--success); font-size: 18px; }
         .detalhe { font-size: 14px; color: #666; margin-bottom: 3px; }
-
-        /* Buttons */
         button { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
         .btn-login { background: var(--primary); color: white; }
         .btn-liberar { background: var(--success); color: white; margin-top: 10px; }
-        
-        /* Modal */
         .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
         .modal-content { background: white; padding: 20px; border-radius: 20px; width: 100%; }
         textarea { width: 100%; height: 100px; border: 1px solid #ddd; border-radius: 12px; padding: 10px; margin: 10px 0; font-size: 16px; }
     </style>
 </head>
 <body>
-
     <div class="container">
         <div id="loginSection" class="login-card">
             <h2>Portal Liberador</h2>
-            <p style="color: #666; margin-bottom: 20px;">Acesso Restrito</p>
             <div id="loginStatus"></div>
             <input type="text" id="userInput" placeholder="Usuário">
             <input type="password" id="passInput" placeholder="Senha">
@@ -46,17 +36,18 @@
         </div>
 
         <div id="mainSection" class="hidden">
-            <h3 style="margin-bottom: 15px; color: var(--primary);">Pendentes para você</h3>
+            <h3 style="margin-bottom: 5px; color: var(--primary);">Sua Fila de Liberação</h3>
+            <p id="userInfo" style="font-size: 12px; color: #999; margin-bottom: 15px;"></p>
             <div id="listContainer"></div>
-            <button style="background:none; color: #999;" onclick="location.reload()">Sair do Sistema</button>
+            <button style="background:none; color: #999; margin-top: 20px;" onclick="location.reload()">Sair</button>
         </div>
     </div>
 
     <div id="modalTeste" class="modal hidden">
         <div class="modal-content">
-            <h3 id="modalTitle">Liberar Pedido</h3>
-            <textarea id="obsTesteInput" placeholder="Sua observação de teste..."></textarea>
-            <button class="btn-liberar" onclick="confirmarLiberacao()">Confirmar Simulação</button>
+            <h3 id="modalTitle">Simular Liberação</h3>
+            <textarea id="obsTesteInput" placeholder="Digite uma observação..."></textarea>
+            <button class="btn-liberar" id="confirmBtn" onclick="confirmarLiberacao()">Confirmar</button>
             <button style="background:none; color: #666; margin-top: 10px;" onclick="fecharModal()">Cancelar</button>
         </div>
     </div>
@@ -78,28 +69,26 @@
                 });
                 const result = await res.json();
                 
-                console.log("Resposta do Login:", result); // Debug no console
+                console.log("Debug Login:", result);
 
                 if (result.success) {
                     session.id = result.data.responseBody.jsessionid.$;
                     session.cookies = result.cookies;
                     session.codUsu = result.codUsuLogado;
                     
+                    document.getElementById('userInfo').innerText = "Usuário ID: " + session.codUsu;
                     document.getElementById('loginSection').classList.add('hidden');
                     document.getElementById('mainSection').classList.remove('hidden');
                     carregarLiberacoes();
                 } else {
                     statusDiv.innerHTML = `<p style="color:red; margin-bottom:10px;">${result.error}</p>`;
                 }
-            } catch (e) { 
-                console.error(e);
-                alert("Erro ao conectar com o servidor."); 
-            }
+            } catch (e) { alert("Erro de conexão."); }
         }
 
         async function carregarLiberacoes() {
             const container = document.getElementById('listContainer');
-            container.innerHTML = "<p>Buscando sua fila...</p>";
+            container.innerHTML = "<p>Buscando pedidos...</p>";
 
             try {
                 const res = await fetch(`${API_BASE}/liberacoes`, {
@@ -114,9 +103,11 @@
                 const result = await res.json();
                 const rows = result.data.responseBody?.rows || [];
 
-                container.innerHTML = rows.length === 0 ? "<p>Nada pendente para você.</p>" : "";
+                container.innerHTML = rows.length === 0 ? "Nenhum pedido pendente para você." : "";
 
                 rows.forEach(row => {
+                    // Mapeamento dos índices do seu SELECT atualizado:
+                    // 0: NUCHAVE, 1: DESCROPER, 2: RAZAOSOCIAL, 3: VLRNOTA, 4: TABELA, 5: VLRATUAL, 6: DHSOLICIT, 7: OBSERVACAO, 8: EVENTO, 9: NOMEUSU
                     container.innerHTML += `
                         <div class="card">
                             <div class="card-header">
@@ -125,17 +116,17 @@
                             </div>
                             <div class="detalhe"><strong>${row[2]}</strong></div>
                             <div class="detalhe">${row[1]}</div>
-                            <div class="detalhe">Solicitante: ${row[8]}</div>
+                            <div class="detalhe">Solicitante: ${row[9]}</div>
+                            <div class="detalhe" style="font-style:italic">"${row[7] || ''}"</div>
                             <button class="btn-liberar" onclick="abrirModal(${row[0]})">Liberar</button>
                         </div>
                     `;
                 });
-            } catch (e) { container.innerHTML = "<p>Erro ao carregar fila.</p>"; }
+            } catch (e) { container.innerHTML = "Erro ao carregar fila."; }
         }
 
         function abrirModal(nuNota) {
             session.currentNuNota = nuNota;
-            document.getElementById('modalTitle').innerText = "Simular Pedido #" + nuNota;
             document.getElementById('modalTeste').classList.remove('hidden');
         }
 
@@ -143,9 +134,8 @@
 
         async function confirmarLiberacao() {
             const obs = document.getElementById('obsTesteInput').value;
-            const btn = document.querySelector('#modalTeste .btn-liberar');
-            btn.innerText = "Gravando...";
-            btn.disabled = true;
+            const btn = document.getElementById('confirmBtn');
+            btn.disabled = true; btn.innerText = "Gravando...";
 
             try {
                 const res = await fetch(`${API_BASE}/teste-liberar`, {
@@ -160,15 +150,12 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    alert("Sucesso! Campo AD_TESTEAPLICATIVOLIBERACAO atualizado.");
+                    alert("Simulação de liberação gravada no pedido " + session.currentNuNota);
                     fecharModal();
                     carregarLiberacoes();
                 } else { alert("Erro ao gravar: " + result.error); }
             } catch (e) { alert("Erro de conexão."); }
-            finally { 
-                btn.innerText = "Confirmar Simulação"; 
-                btn.disabled = false; 
-            }
+            finally { btn.disabled = false; btn.innerText = "Confirmar"; }
         }
     </script>
 </body>
