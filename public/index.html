@@ -3,94 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Portal Rendicolla</title>
+    <title>Portal Rendicolla | Liberação</title>
     <style>
-        :root { --amarelo: #FFD700; --preto: #1A1A1A; --cinza: #F4F4F4; --branco: #FFFFFF; --sucesso: #27ae60; --alerta: #f39c12; --perigo: #e74c3c; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background: var(--cinza); color: var(--preto); }
+        :root { 
+            --amarelo: #FFD700; 
+            --preto: #1A1A1A; 
+            --cinza: #F8F9FA; 
+            --branco: #FFFFFF; 
+            --sucesso: #28A745; 
+            --sombra: rgba(0,0,0,0.08);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, sans-serif; }
+        body { background: var(--cinza); color: var(--preto); overflow-x: hidden; }
         .hidden { display: none !important; }
 
-        header { background: var(--preto); color: var(--amarelo); padding: 20px; text-align: center; border-bottom: 5px solid var(--amarelo); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .container { padding: 15px; max-width: 1200px; margin: 0 auto; }
+        header { 
+            background: var(--preto); 
+            color: var(--amarelo); 
+            padding: 25px; 
+            text-align: center; 
+            border-bottom: 5px solid var(--amarelo);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
 
-        /* TOAST NOTIFICATIONS */
+        .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+
+        /* NOTIFICAÇÃO TOAST */
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-        .toast { background: var(--preto); color: var(--amarelo); padding: 15px 25px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border-left: 5px solid var(--amarelo); display: flex; align-items: center; gap: 10px; font-weight: bold; animation: slideIn 0.5s ease forwards, fadeOut 0.5s ease forwards 3s; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; pointer-events: none; } }
+        .toast { 
+            background: var(--preto); 
+            color: var(--amarelo); 
+            padding: 18px 30px; 
+            border-radius: 12px; 
+            margin-bottom: 10px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25); 
+            border-left: 6px solid var(--amarelo); 
+            display: flex; align-items: center; gap: 12px; 
+            font-weight: 600; 
+            animation: slideIn 0.5s ease forwards;
+        }
+
+        /* LOGIN SMOOTH */
+        .login-screen { 
+            max-width: 420px; 
+            margin: 80px auto; 
+            background: var(--branco); 
+            padding: 45px; 
+            border-radius: 24px; 
+            text-align: center; 
+            box-shadow: 0 20px 40px var(--sombra);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .login-screen h2 { font-size: 24px; margin-bottom: 30px; font-weight: 800; letter-spacing: -0.5px; }
+        
+        .input-wrapper { margin-bottom: 15px; text-align: left; }
+        .input-wrapper label { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #666; margin-left: 5px; }
+        
+        input { 
+            width: 100%; 
+            padding: 16px; 
+            margin-top: 5px;
+            border: 2px solid #eee; 
+            border-radius: 14px; 
+            font-size: 16px; 
+            transition: 0.3s;
+            background: #FAFAFA;
+        }
+        input:focus { border-color: var(--amarelo); outline: none; background: #FFF; box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.15); }
 
         /* DASHBOARD */
-        .dash-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .dash-card { background: var(--preto); color: var(--branco); padding: 12px; border-radius: 12px; text-align: center; border-bottom: 3px solid var(--amarelo); }
-        .dash-card small { font-size: 9px; text-transform: uppercase; color: var(--amarelo); }
-        .dash-card h2 { font-size: 1rem; margin-top: 5px; }
+        .dash-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 25px; }
+        .dash-card { 
+            background: var(--preto); 
+            color: var(--branco); 
+            padding: 20px 10px; 
+            border-radius: 18px; 
+            text-align: center; 
+            border-bottom: 4px solid var(--amarelo);
+        }
+        .dash-card small { font-size: 10px; text-transform: uppercase; color: var(--amarelo); letter-spacing: 1px; }
+        .dash-card h2 { font-size: 1.2rem; margin-top: 5px; }
 
-        /* FILTROS */
-        .filter-box { background: var(--branco); padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .search-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; font-size: 16px; }
-        .date-group { display: flex; gap: 10px; margin-bottom: 10px; }
-        input[type="date"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        /* BOTAO PREMIUM */
+        button { 
+            background: var(--amarelo); 
+            color: var(--preto); 
+            border: none; 
+            padding: 18px; 
+            border-radius: 14px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            width: 100%; 
+            text-transform: uppercase;
+            transition: 0.3s;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 0 #D4B600;
+        }
+        button:hover { transform: translateY(-2px); background: #f5cf00; box-shadow: 0 6px 0 #D4B600; }
+        button:active { transform: translateY(2px); box-shadow: 0 0 0 #D4B600; }
 
-        /* CARDS */
-        .card { background: var(--branco); margin-bottom: 12px; border-radius: 12px; padding: 15px; border-left: 8px solid var(--preto); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .card-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
-        .vlr { font-weight: 800; color: var(--sucesso); }
-        .urgency-badge { font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 10px; color: white; margin-top: 5px; display: inline-block; }
-        .u-hoje { background: var(--sucesso); } .u-ontem { background: var(--alerta); } .u-atrasado { background: var(--perigo); }
+        /* CARDS FILA */
+        .card { 
+            background: var(--branco); 
+            margin-bottom: 15px; 
+            border-radius: 20px; 
+            padding: 20px; 
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px var(--sombra);
+            transition: 0.3s;
+        }
+        .vlr { font-weight: 800; font-size: 1.2rem; color: var(--sucesso); }
 
-        /* BOTÕES */
-        button { background: var(--amarelo); color: var(--preto); border: none; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer; width: 100%; text-transform: uppercase; }
-        .btn-liberar { margin-top: 10px; }
-
-        /* MODAL */
-        .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-        .modal-content { background: var(--branco); padding: 25px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; }
-        textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin: 15px 0; }
-
-        .login-screen { max-width: 350px; margin: 80px auto; background: #fff; padding: 30px; border-radius: 20px; text-align: center; border-top: 8px solid var(--amarelo); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body>
 
     <div id="toast-container"></div>
-
     <header><h1>RENDICOLLA PRO</h1></header>
 
     <div class="container">
         <div id="loginSection" class="login-screen">
-            <h2 style="margin-bottom:20px">LOGIN</h2>
-            <input type="text" id="userInput" placeholder="Usuário">
-            <input type="password" id="passInput" placeholder="Senha" style="margin-top:10px">
-            <button onclick="handleLogin()" style="margin-top:20px">ENTRAR</button>
+            <h2>Portal de Acesso</h2>
+            <div class="input-wrapper">
+                <label>Usuário</label>
+                <input type="text" id="userInput" placeholder="Digite seu CPF ou usuário">
+            </div>
+            <div class="input-wrapper">
+                <label>Senha</label>
+                <input type="password" id="passInput" placeholder="••••••••">
+            </div>
+            <button onclick="handleLogin()" style="margin-top:15px">Acessar Sistema</button>
         </div>
 
         <div id="mainSection" class="hidden">
             <div class="dash-row">
-                <div class="dash-card"><small>Pendentes</small><h2 id="dashCount">0</h2></div>
+                <div class="dash-card"><small>Pedidos</small><h2 id="dashCount">0</h2></div>
                 <div class="dash-card"><small>Total</small><h2 id="dashTotal">R$ 0</h2></div>
                 <div class="dash-card"><small>Média</small><h2 id="dashAvg">R$ 0</h2></div>
             </div>
 
-            <div class="filter-box">
-                <input type="text" id="searchInput" class="search-input" placeholder="Buscar parceiro ou nota..." onkeyup="filtrarLocal()">
-                <div class="date-group">
+            <div style="background:white; padding:20px; border-radius:20px; margin-bottom:20px; box-shadow: 0 4px 12px var(--sombra)">
+                <input type="text" id="searchInput" placeholder="Buscar parceiro ou nota..." onkeyup="filtrarLocal()" style="margin-bottom:10px">
+                <div style="display:flex; gap:10px">
                     <input type="date" id="dtIni">
                     <input type="date" id="dtFim">
                 </div>
-                <button onclick="carregarLiberacoes()">FILTRAR</button>
+                <button onclick="carregarLiberacoes()" style="margin-top:10px; padding:12px">Filtrar Lista</button>
             </div>
 
             <div id="listContainer"></div>
-            <button onclick="location.reload()" style="background:none; color:#999; margin-top:20px">Sair</button>
+            <button onclick="location.reload()" style="background:none; color:#999; box-shadow:none; text-decoration:underline">Encerrar Sessão</button>
         </div>
     </div>
 
-    <div id="modalTeste" class="modal hidden">
-        <div class="modal-content">
-            <h3 id="modalLabel">Liberar Pedido</h3>
-            <textarea id="obsTesteInput" placeholder="Observação..."></textarea>
-            <button onclick="confirmarLiberacao()" style="background:var(--sucesso); color:white">CONFIRMAR</button>
-            <button onclick="document.getElementById('modalTeste').classList.add('hidden')" style="background:none; color:#999; margin-top:10px">CANCELAR</button>
+    <div id="modalTeste" class="modal hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; backdrop-filter:blur(5px)">
+        <div style="background:white; padding:30px; border-radius:25px; width:100%; max-width:400px; text-align:center">
+            <h3 id="modalLabel">Analisar Pedido</h3>
+            <textarea id="obsTesteInput" placeholder="Observação interna..." style="width:100%; height:100px; border-radius:15px; border:2px solid #eee; padding:15px; margin:15px 0; font-size:16px; outline:none"></textarea>
+            <button onclick="confirmarLiberacao()" style="background:var(--sucesso); color:white; box-shadow: 0 4px 0 #1E7E34">CONFIRMAR</button>
+            <button onclick="document.getElementById('modalTeste').classList.add('hidden')" style="background:none; color:#999; box-shadow:none; margin-top:10px">CANCELAR</button>
         </div>
     </div>
 
@@ -99,14 +172,14 @@
         let session = { id: null, cookies: null, codUsu: null, currentNuNota: null };
         let listaOriginal = [];
 
-        // Setup datas iniciais
         document.getElementById('dtFim').value = new Date().toISOString().split('T')[0];
         document.getElementById('dtIni').value = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
         function showToast(message, isError = false) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            toast.className = `toast ${isError ? 'error' : ''}`;
+            toast.className = 'toast';
+            if(isError) toast.style.borderColor = '#E74C3C';
             toast.innerHTML = `<span>${isError ? '⚠️' : '✅'}</span> <span>${message}</span>`;
             container.appendChild(toast);
             setTimeout(() => toast.remove(), 3500);
@@ -115,6 +188,8 @@
         async function handleLogin() {
             const user = document.getElementById('userInput').value;
             const password = document.getElementById('passInput').value;
+            if(!user || !password) return showToast("Preencha os campos!", true);
+
             try {
                 const res = await fetch(`${API_BASE}/login`, {
                     method: 'POST',
@@ -125,19 +200,27 @@
                 if (result.success) {
                     session.id = result.data.responseBody.jsessionid.$;
                     session.cookies = result.cookies;
-                    session.codUsu = result.codUsuLogado;
                     
+                    const resId = await fetch(`${API_BASE}/get-user-id`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ jsessionid: session.id, cookies: session.cookies })
+                    });
+                    const idData = await resId.json();
+                    session.codUsu = idData.realId || result.codUsuLogado;
+
                     document.getElementById('loginSection').classList.add('hidden');
                     document.getElementById('mainSection').classList.remove('hidden');
-                    showToast("Bem-vindo ao Portal!");
+                    showToast("Login realizado com sucesso!");
                     carregarLiberacoes();
                 } else { showToast(result.error, true); }
-            } catch (e) { showToast("Erro de conexão", true); }
+            } catch (e) { showToast("Erro de rede.", true); }
         }
 
         async function carregarLiberacoes() {
+            if(!session.codUsu) return;
             const container = document.getElementById('listContainer');
-            container.innerHTML = "<p style='text-align:center'>Buscando...</p>";
+            container.innerHTML = "<p style='text-align:center; padding:20px'>Sincronizando dados...</p>";
             try {
                 const res = await fetch(`${API_BASE}/liberacoes`, {
                     method: 'POST',
@@ -150,36 +233,42 @@
                     })
                 });
                 const result = await res.json();
+                if(!result.success) {
+                    showToast(result.error || "Erro no Oracle", true);
+                    container.innerHTML = "";
+                    return;
+                }
                 listaOriginal = result.data.responseBody?.rows || [];
-                atualizarDash();
-                renderizar(listaOriginal);
-            } catch (e) { showToast("Erro ao carregar fila", true); }
-        }
+                
+                const total = listaOriginal.reduce((acc, curr) => acc + parseFloat(curr[3]), 0);
+                document.getElementById('dashCount').innerText = listaOriginal.length;
+                document.getElementById('dashTotal').innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                document.getElementById('dashAvg').innerText = (total / (listaOriginal.length || 1)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-        function atualizarDash() {
-            const total = listaOriginal.reduce((acc, curr) => acc + parseFloat(curr[3]), 0);
-            document.getElementById('dashCount').innerText = listaOriginal.length;
-            document.getElementById('dashTotal').innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            document.getElementById('dashAvg').innerText = (total / (listaOriginal.length || 1)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                renderizar(listaOriginal);
+            } catch (e) { showToast("Erro fatal de busca", true); }
         }
 
         function renderizar(rows) {
             const container = document.getElementById('listContainer');
-            container.innerHTML = rows.length === 0 ? "<p style='text-align:center'>Fila vazia.</p>" : "";
+            container.innerHTML = rows.length === 0 ? "<p style='text-align:center; padding:20px'>Nenhuma pendência.</p>" : "";
             rows.forEach(row => {
                 const partes = row[6].split(' ')[0].split('/');
                 const diff = Math.floor((new Date() - new Date(partes[2], partes[1]-1, partes[0])) / 86400000);
-                let uC = 'u-hoje', uL = 'Hoje';
-                if(diff === 1) { uC = 'u-ontem'; uL = 'Ontem'; }
-                else if(diff > 1) { uC = 'u-atrasado'; uL = `Há ${diff} dias`; }
+                let uC = '#28A745', uL = 'Hoje';
+                if(diff === 1) { uC = '#F39C12'; uL = 'Ontem'; }
+                else if(diff > 1) { uC = '#E74C3C'; uL = `Há ${diff} dias`; }
 
                 container.innerHTML += `
                     <div class="card">
-                        <div class="card-header"><span class="nu">#${row[0]}</span><span class="vlr">${parseFloat(row[3]).toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</span></div>
-                        <div style="font-weight:bold; font-size:14px">${row[2]}</div>
+                        <div style="display:flex; justify-content:space-between">
+                            <span style="font-weight:bold; font-size:12px; background:#eee; padding:2px 8px; border-radius:5px">#${row[0]}</span>
+                            <span class="vlr">${parseFloat(row[3]).toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</span>
+                        </div>
+                        <div style="font-weight:bold; margin-top:10px">${row[2]}</div>
                         <div style="font-size:12px; color:#666">${row[1]}</div>
-                        <div class="urgency-badge ${uC}">${uL}</div>
-                        <button class="btn-liberar" onclick="abrirModal(${row[0]})">Analisar</button>
+                        <div style="font-size:10px; color:white; background:${uC}; display:inline-block; padding:2px 8px; border-radius:10px; margin-top:10px; font-weight:bold">${uL}</div>
+                        <button onclick="abrirModal(${row[0]})" style="margin-top:15px; padding:10px; font-size:12px; box-shadow: 0 3px 0 #D4B600">ANALISAR</button>
                     </div>`;
             });
         }
@@ -204,11 +293,11 @@
                     body: JSON.stringify({ jsessionid: session.id, cookies: session.cookies, nuNota: session.currentNuNota, obsTeste: obs })
                 });
                 if ((await res.json()).success) {
-                    showToast("Liberação simulada!");
+                    showToast("Sucesso na liberação!");
                     document.getElementById('modalTeste').classList.add('hidden');
                     carregarLiberacoes();
                 }
-            } catch (e) { showToast("Erro ao gravar", true); }
+            } catch (e) { showToast("Erro no servidor.", true); }
         }
     </script>
 </body>

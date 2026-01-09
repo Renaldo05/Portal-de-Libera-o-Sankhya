@@ -9,7 +9,6 @@ app.use(express.json());
 const APP_KEY = 'a17c5048-ce8a-4f6f-b6e2-90ef06a38439';
 const BASE_URL = 'https://rendicolla.sankhyacloud.com.br/mge/service.sbr';
 
-// LOGIN SIMPLES
 app.post('/api/login', async (req, res) => {
     try {
         const { user, password } = req.body;
@@ -24,15 +23,37 @@ app.post('/api/login', async (req, res) => {
         const data = await response.json();
         if (data.status !== "1") return res.status(401).json({ success: false, error: data.statusMessage });
         const cookies = response.headers.raw()['set-cookie'];
-        const codUsu = data.responseBody?.userId?.$ || data.responseBody?.idUsu?.$ || null;
+        const codUsu = data.responseBody?.idUsu?.$ || data.responseBody?.userId?.$ || null;
         res.json({ success: true, data, cookies, codUsuLogado: codUsu });
     } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
-// FILA DE LIBERAÇÃO
+app.post('/api/get-user-id', async (req, res) => {
+    try {
+        const { jsessionid, cookies } = req.body;
+        const headers = { 'Content-Type': 'application/json', 'appkey': APP_KEY };
+        if (cookies) headers['Cookie'] = cookies.join('; ');
+        const sql = `SELECT CODUSU FROM TSIUSU WHERE CODUSU = STP_GET_CODUSULOGADO`;
+        const response = await fetch(`${BASE_URL}?serviceName=DbExplorerSP.executeQuery&outputType=json&mgeSession=${jsessionid}`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({ "serviceName": "DbExplorerSP.executeQuery", "requestBody": { "sql": sql } })
+        });
+        const data = await response.json();
+        res.json({ success: true, realId: data.responseBody?.rows?.[0]?.[0] });
+    } catch (error) { res.status(500).json({ success: false }); }
+});
+
 app.post('/api/liberacoes', async (req, res) => {
     try {
         const { jsessionid, cookies, codUsuLogado, dtIni, dtFim } = req.body;
+        
+        // Proteção contra o erro NaN
+        const idLimpo = parseInt(codUsuLogado);
+        if (isNaN(idLimpo)) {
+            return res.status(400).json({ success: false, error: "ID de usuário inválido para consulta." });
+        }
+
         const headers = { 'Content-Type': 'application/json', 'appkey': APP_KEY };
         if (cookies) headers['Cookie'] = cookies.join('; ');
 
@@ -41,7 +62,7 @@ app.post('/api/liberacoes', async (req, res) => {
             filtroData = ` AND LIB.DHSOLICIT BETWEEN TO_DATE('${dtIni}','YYYY-MM-DD') AND TO_DATE('${dtFim} 23:59:59','YYYY-MM-DD HH24:MI:SS')`;
         }
 
-        const sql = `SELECT LIB.NUCHAVE, TOP.DESCROPER, PAR.RAZAOSOCIAL, CAB.VLRNOTA, LIB.TABELA, LIB.VLRATUAL, LIB.DHSOLICIT, LIB.OBSERVACAO, LIB.EVENTO, USUSOL.NOMEUSU FROM TSILIB LIB JOIN TSIUSU USUSOL ON USUSOL.CODUSU = LIB.CODUSUSOLICIT JOIN TGFCAB CAB ON CAB.NUNOTA = LIB.NUCHAVE JOIN TGFPAR PAR ON PAR.CODPARC = CAB.CODPARC JOIN TGFTOP TOP ON TOP.CODTIPOPER = CAB.CODTIPOPER AND TOP.DHALTER = CAB.DHTIPOPER WHERE LIB.CODUSULIB = ${parseInt(codUsuLogado)} AND LIB.VLRLIBERADO <> LIB.VLRATUAL ${filtroData} ORDER BY LIB.DHSOLICIT DESC`;
+        const sql = `SELECT LIB.NUCHAVE, TOP.DESCROPER, PAR.RAZAOSOCIAL, CAB.VLRNOTA, LIB.TABELA, LIB.VLRATUAL, LIB.DHSOLICIT, LIB.OBSERVACAO, LIB.EVENTO, USUSOL.NOMEUSU FROM TSILIB LIB JOIN TSIUSU USUSOL ON USUSOL.CODUSU = LIB.CODUSUSOLICIT JOIN TGFCAB CAB ON CAB.NUNOTA = LIB.NUCHAVE JOIN TGFPAR PAR ON PAR.CODPARC = CAB.CODPARC JOIN TGFTOP TOP ON TOP.CODTIPOPER = CAB.CODTIPOPER AND TOP.DHALTER = CAB.DHTIPOPER WHERE LIB.CODUSULIB = ${idLimpo} AND LIB.VLRLIBERADO <> LIB.VLRATUAL ${filtroData} ORDER BY LIB.DHSOLICIT DESC`;
 
         const response = await fetch(`${BASE_URL}?serviceName=DbExplorerSP.executeQuery&outputType=json&mgeSession=${jsessionid}`, {
             method: 'POST',
@@ -53,7 +74,6 @@ app.post('/api/liberacoes', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
-// UPDATE DE TESTE
 app.post('/api/teste-liberar', async (req, res) => {
     try {
         const { jsessionid, cookies, nuNota, obsTeste } = req.body;
