@@ -9,6 +9,7 @@ app.use(express.json());
 const APP_KEY = 'a17c5048-ce8a-4f6f-b6e2-90ef06a38439';
 const BASE_URL = 'https://rendicolla.sankhyacloud.com.br/mge/service.sbr';
 
+// LOGIN SIMPLES
 app.post('/api/login', async (req, res) => {
     try {
         const { user, password } = req.body;
@@ -23,27 +24,12 @@ app.post('/api/login', async (req, res) => {
         const data = await response.json();
         if (data.status !== "1") return res.status(401).json({ success: false, error: data.statusMessage });
         const cookies = response.headers.raw()['set-cookie'];
-        const codUsu = data.responseBody?.idUsu?.$ || data.responseBody?.userId?.$ || null;
+        const codUsu = data.responseBody?.userId?.$ || data.responseBody?.idUsu?.$ || null;
         res.json({ success: true, data, cookies, codUsuLogado: codUsu });
     } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
-app.post('/api/get-user-id', async (req, res) => {
-    try {
-        const { jsessionid, cookies } = req.body;
-        const headers = { 'Content-Type': 'application/json', 'appkey': APP_KEY };
-        if (cookies) headers['Cookie'] = cookies.join('; ');
-        const sql = `SELECT CODUSU FROM TSIUSU WHERE CODUSU = STP_GET_CODUSULOGADO`;
-        const response = await fetch(`${BASE_URL}?serviceName=DbExplorerSP.executeQuery&outputType=json&mgeSession=${jsessionid}`, {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify({ "serviceName": "DbExplorerSP.executeQuery", "requestBody": { "sql": sql } })
-        });
-        const data = await response.json();
-        res.json({ success: true, realId: data.responseBody?.rows?.[0]?.[0] });
-    } catch (error) { res.status(500).json({ success: false }); }
-});
-
+// FILA DE LIBERAÇÃO
 app.post('/api/liberacoes', async (req, res) => {
     try {
         const { jsessionid, cookies, codUsuLogado, dtIni, dtFim } = req.body;
@@ -67,6 +53,7 @@ app.post('/api/liberacoes', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
+// UPDATE DE TESTE
 app.post('/api/teste-liberar', async (req, res) => {
     try {
         const { jsessionid, cookies, nuNota, obsTeste } = req.body;

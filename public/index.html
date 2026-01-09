@@ -3,71 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rendicolla PRO - Liberações</title>
+    <title>Portal Rendicolla</title>
     <style>
         :root { --amarelo: #FFD700; --preto: #1A1A1A; --cinza: #F4F4F4; --branco: #FFFFFF; --sucesso: #27ae60; --alerta: #f39c12; --perigo: #e74c3c; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background: var(--cinza); color: var(--preto); }
         .hidden { display: none !important; }
 
-        header { background: var(--preto); color: var(--amarelo); padding: 20px; text-align: center; border-bottom: 5px solid var(--amarelo); box-shadow: 0 4px 10px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 100; }
-        header h1 { font-size: 1.2rem; letter-spacing: 2px; }
-
+        header { background: var(--preto); color: var(--amarelo); padding: 20px; text-align: center; border-bottom: 5px solid var(--amarelo); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .container { padding: 15px; max-width: 1200px; margin: 0 auto; }
+
+        /* TOAST NOTIFICATIONS */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .toast { background: var(--preto); color: var(--amarelo); padding: 15px 25px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border-left: 5px solid var(--amarelo); display: flex; align-items: center; gap: 10px; font-weight: bold; animation: slideIn 0.5s ease forwards, fadeOut 0.5s ease forwards 3s; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; pointer-events: none; } }
 
         /* DASHBOARD */
         .dash-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .dash-card { background: var(--preto); color: var(--branco); padding: 15px; border-radius: 12px; text-align: center; border-bottom: 4px solid var(--amarelo); }
-        .dash-card small { font-size: 10px; text-transform: uppercase; color: var(--amarelo); display: block; }
-        .dash-card h2 { font-size: 1.1rem; margin-top: 5px; }
+        .dash-card { background: var(--preto); color: var(--branco); padding: 12px; border-radius: 12px; text-align: center; border-bottom: 3px solid var(--amarelo); }
+        .dash-card small { font-size: 9px; text-transform: uppercase; color: var(--amarelo); }
+        .dash-card h2 { font-size: 1rem; margin-top: 5px; }
 
-        /* FILTROS E BUSCA */
-        .filter-box { background: var(--branco); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .search-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; font-size: 16px; }
-        .date-group { display: flex; gap: 10px; margin-bottom: 15px; }
-        .date-group div { flex: 1; }
+        /* FILTROS */
+        .filter-box { background: var(--branco); padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .search-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; font-size: 16px; }
+        .date-group { display: flex; gap: 10px; margin-bottom: 10px; }
         input[type="date"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
 
-        /* LISTA */
-        .card { background: var(--branco); margin-bottom: 12px; border-radius: 12px; padding: 15px; border-left: 8px solid var(--preto); box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; }
-        .card-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
-        .vlr { font-weight: 800; font-size: 1.1rem; color: var(--sucesso); }
-        .nu { font-weight: bold; font-size: 0.8rem; background: var(--preto); color: var(--amarelo); padding: 2px 6px; border-radius: 4px; }
-        
-        /* URGENCIA */
-        .urgency-badge { font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 20px; color: white; margin-top: 5px; display: inline-block; }
-        .u-hoje { background: var(--sucesso); }
-        .u-ontem { background: var(--alerta); }
-        .u-atrasado { background: var(--perigo); }
+        /* CARDS */
+        .card { background: var(--branco); margin-bottom: 12px; border-radius: 12px; padding: 15px; border-left: 8px solid var(--preto); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .card-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .vlr { font-weight: 800; color: var(--sucesso); }
+        .urgency-badge { font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 10px; color: white; margin-top: 5px; display: inline-block; }
+        .u-hoje { background: var(--sucesso); } .u-ontem { background: var(--alerta); } .u-atrasado { background: var(--perigo); }
 
         /* BOTÕES */
-        button { background: var(--amarelo); color: var(--preto); border: none; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.2s; width: 100%; text-transform: uppercase; }
-        button:active { transform: scale(0.98); }
-        .btn-liberar { margin-top: 12px; }
+        button { background: var(--amarelo); color: var(--preto); border: none; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer; width: 100%; text-transform: uppercase; }
+        .btn-liberar { margin-top: 10px; }
 
         /* MODAL */
-        .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; backdrop-filter: blur(4px); }
+        .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
         .modal-content { background: var(--branco); padding: 25px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; }
-        textarea { width: 100%; height: 100px; padding: 12px; border: 1px solid #ddd; border-radius: 10px; margin: 15px 0; font-size: 16px; }
+        textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin: 15px 0; }
 
-        .login-screen { max-width: 400px; margin: 60px auto; background: #fff; padding: 40px; border-radius: 20px; text-align: center; border-top: 8px solid var(--amarelo); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .login-screen { max-width: 350px; margin: 80px auto; background: #fff; padding: 30px; border-radius: 20px; text-align: center; border-top: 8px solid var(--amarelo); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
+
+    <div id="toast-container"></div>
 
     <header><h1>RENDICOLLA PRO</h1></header>
 
     <div class="container">
         <div id="loginSection" class="login-screen">
-            <h2 style="margin-bottom:25px">ACESSO AO PORTAL</h2>
-            <input type="text" id="userInput" placeholder="Seu Usuário">
-            <input type="password" id="passInput" placeholder="Sua Senha" style="margin-top:10px">
-            <button onclick="handleLogin()" style="margin-top:25px">ENTRAR</button>
+            <h2 style="margin-bottom:20px">LOGIN</h2>
+            <input type="text" id="userInput" placeholder="Usuário">
+            <input type="password" id="passInput" placeholder="Senha" style="margin-top:10px">
+            <button onclick="handleLogin()" style="margin-top:20px">ENTRAR</button>
         </div>
 
         <div id="mainSection" class="hidden">
             <div class="dash-row">
-                <div class="dash-card"><small>Pedidos</small><h2 id="dashCount">0</h2></div>
+                <div class="dash-card"><small>Pendentes</small><h2 id="dashCount">0</h2></div>
                 <div class="dash-card"><small>Total</small><h2 id="dashTotal">R$ 0</h2></div>
                 <div class="dash-card"><small>Média</small><h2 id="dashAvg">R$ 0</h2></div>
             </div>
@@ -75,23 +74,22 @@
             <div class="filter-box">
                 <input type="text" id="searchInput" class="search-input" placeholder="Buscar parceiro ou nota..." onkeyup="filtrarLocal()">
                 <div class="date-group">
-                    <div><label style="font-size:10px; font-weight:bold">DE:</label><input type="date" id="dtIni"></div>
-                    <div><label style="font-size:10px; font-weight:bold">ATÉ:</label><input type="date" id="dtFim"></div>
+                    <input type="date" id="dtIni">
+                    <input type="date" id="dtFim">
                 </div>
-                <button onclick="carregarLiberacoes()">ATUALIZAR FILA</button>
+                <button onclick="carregarLiberacoes()">FILTRAR</button>
             </div>
 
             <div id="listContainer"></div>
-            
-            <button onclick="location.reload()" style="background:none; color:#999; font-size:12px; margin-top:30px">Sair do Sistema</button>
+            <button onclick="location.reload()" style="background:none; color:#999; margin-top:20px">Sair</button>
         </div>
     </div>
 
     <div id="modalTeste" class="modal hidden">
         <div class="modal-content">
             <h3 id="modalLabel">Liberar Pedido</h3>
-            <textarea id="obsTesteInput" placeholder="Observação interna..."></textarea>
-            <button onclick="confirmarLiberacao()" style="background:var(--sucesso); color:white">CONFIRMAR LIBERAÇÃO</button>
+            <textarea id="obsTesteInput" placeholder="Observação..."></textarea>
+            <button onclick="confirmarLiberacao()" style="background:var(--sucesso); color:white">CONFIRMAR</button>
             <button onclick="document.getElementById('modalTeste').classList.add('hidden')" style="background:none; color:#999; margin-top:10px">CANCELAR</button>
         </div>
     </div>
@@ -101,11 +99,18 @@
         let session = { id: null, cookies: null, codUsu: null, currentNuNota: null };
         let listaOriginal = [];
 
-        // Inicializar datas
-        const d = new Date();
-        document.getElementById('dtFim').value = d.toISOString().split('T')[0];
-        d.setDate(d.getDate() - 15);
-        document.getElementById('dtIni').value = d.toISOString().split('T')[0];
+        // Setup datas iniciais
+        document.getElementById('dtFim').value = new Date().toISOString().split('T')[0];
+        document.getElementById('dtIni').value = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+        function showToast(message, isError = false) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${isError ? 'error' : ''}`;
+            toast.innerHTML = `<span>${isError ? '⚠️' : '✅'}</span> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
 
         async function handleLogin() {
             const user = document.getElementById('userInput').value;
@@ -120,26 +125,19 @@
                 if (result.success) {
                     session.id = result.data.responseBody.jsessionid.$;
                     session.cookies = result.cookies;
+                    session.codUsu = result.codUsuLogado;
                     
-                    const resId = await fetch(`${API_BASE}/get-user-id`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ jsessionid: session.id, cookies: session.cookies })
-                    });
-                    const idData = await resId.json();
-                    session.codUsu = idData.realId || 9;
-
                     document.getElementById('loginSection').classList.add('hidden');
                     document.getElementById('mainSection').classList.remove('hidden');
+                    showToast("Bem-vindo ao Portal!");
                     carregarLiberacoes();
-                } else { alert("Acesso inválido."); }
-            } catch (e) { alert("Erro de rede."); }
+                } else { showToast(result.error, true); }
+            } catch (e) { showToast("Erro de conexão", true); }
         }
 
         async function carregarLiberacoes() {
             const container = document.getElementById('listContainer');
-            container.innerHTML = "<p style='text-align:center'>Sincronizando...</p>";
-
+            container.innerHTML = "<p style='text-align:center'>Buscando...</p>";
             try {
                 const res = await fetch(`${API_BASE}/liberacoes`, {
                     method: 'POST',
@@ -153,76 +151,64 @@
                 });
                 const result = await res.json();
                 listaOriginal = result.data.responseBody?.rows || [];
-                
-                // Dashboard update
-                const total = listaOriginal.reduce((acc, curr) => acc + parseFloat(curr[3]), 0);
-                document.getElementById('dashCount').innerText = listaOriginal.length;
-                document.getElementById('dashTotal').innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                document.getElementById('dashAvg').innerText = (total / (listaOriginal.length || 1)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
+                atualizarDash();
                 renderizar(listaOriginal);
-            } catch (e) { container.innerHTML = "Erro ao buscar dados."; }
+            } catch (e) { showToast("Erro ao carregar fila", true); }
+        }
+
+        function atualizarDash() {
+            const total = listaOriginal.reduce((acc, curr) => acc + parseFloat(curr[3]), 0);
+            document.getElementById('dashCount').innerText = listaOriginal.length;
+            document.getElementById('dashTotal').innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('dashAvg').innerText = (total / (listaOriginal.length || 1)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
         function renderizar(rows) {
             const container = document.getElementById('listContainer');
-            container.innerHTML = rows.length === 0 ? "<p style='text-align:center; padding:20px;'>Nenhuma pendência encontrada.</p>" : "";
-
+            container.innerHTML = rows.length === 0 ? "<p style='text-align:center'>Fila vazia.</p>" : "";
             rows.forEach(row => {
-                // LÓGICA DE URGÊNCIA POR DATA DE SOLICITAÇÃO (row[6])
-                // O formato do Oracle costuma ser DD/MM/YYYY HH24:MI:SS
                 const partes = row[6].split(' ')[0].split('/');
-                const dataSolicit = new Date(partes[2], partes[1] - 1, partes[0]);
-                const diffDias = Math.floor((new Date() - dataSolicit) / (1000 * 60 * 60 * 24));
-
-                let urgClass = 'u-hoje';
-                let urgLabel = 'Solicitado Hoje';
-                
-                if(diffDias === 1) { urgClass = 'u-ontem'; urgLabel = 'Desde Ontem'; }
-                else if(diffDias > 1) { urgClass = 'u-atrasado'; urgLabel = `Há ${diffDias} dias`; }
+                const diff = Math.floor((new Date() - new Date(partes[2], partes[1]-1, partes[0])) / 86400000);
+                let uC = 'u-hoje', uL = 'Hoje';
+                if(diff === 1) { uC = 'u-ontem'; uL = 'Ontem'; }
+                else if(diff > 1) { uC = 'u-atrasado'; uL = `Há ${diff} dias`; }
 
                 container.innerHTML += `
                     <div class="card">
-                        <div class="card-header">
-                            <span class="nu">#${row[0]}</span>
-                            <span class="vlr">${parseFloat(row[3]).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                        </div>
+                        <div class="card-header"><span class="nu">#${row[0]}</span><span class="vlr">${parseFloat(row[3]).toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</span></div>
                         <div style="font-weight:bold; font-size:14px">${row[2]}</div>
                         <div style="font-size:12px; color:#666">${row[1]}</div>
-                        <div class="urgency-badge ${urgClass}">${urgLabel}</div>
-                        <div style="font-size:10px; color:#999; margin-top:5px">Solicitado por: ${row[9]}</div>
-                        <button class="btn-liberar" onclick="abrirModal(${row[0]})">ANALISAR LIBERAÇÃO</button>
-                    </div>
-                `;
+                        <div class="urgency-badge ${uC}">${uL}</div>
+                        <button class="btn-liberar" onclick="abrirModal(${row[0]})">Analisar</button>
+                    </div>`;
             });
         }
 
         function filtrarLocal() {
             const termo = document.getElementById('searchInput').value.toLowerCase();
-            const filtrados = listaOriginal.filter(r => 
-                r[0].toString().includes(termo) || r[2].toLowerCase().includes(termo)
-            );
-            renderizar(filtrados);
+            renderizar(listaOriginal.filter(r => r[0].toString().includes(termo) || r[2].toLowerCase().includes(termo)));
         }
 
         function abrirModal(nuNota) {
             session.currentNuNota = nuNota;
-            document.getElementById('modalLabel').innerText = "Liberar Pedido #" + nuNota;
+            document.getElementById('modalLabel').innerText = "Liberar #" + nuNota;
             document.getElementById('modalTeste').classList.remove('hidden');
         }
 
         async function confirmarLiberacao() {
             const obs = document.getElementById('obsTesteInput').value;
-            const res = await fetch(`${API_BASE}/teste-liberar`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ jsessionid: session.id, cookies: session.cookies, nuNota: session.currentNuNota, obsTeste: obs })
-            });
-            if ((await res.json()).success) {
-                alert("Simulação concluída com sucesso!");
-                document.getElementById('modalTeste').classList.add('hidden');
-                carregarLiberacoes();
-            }
+            try {
+                const res = await fetch(`${API_BASE}/teste-liberar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jsessionid: session.id, cookies: session.cookies, nuNota: session.currentNuNota, obsTeste: obs })
+                });
+                if ((await res.json()).success) {
+                    showToast("Liberação simulada!");
+                    document.getElementById('modalTeste').classList.add('hidden');
+                    carregarLiberacoes();
+                }
+            } catch (e) { showToast("Erro ao gravar", true); }
         }
     </script>
 </body>
