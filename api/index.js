@@ -9,7 +9,7 @@ app.use(express.json());
 const APP_KEY = 'a17c5048-ce8a-4f6f-b6e2-90ef06a38439';
 const BASE_URL = 'https://rendicolla.sankhyacloud.com.br/mge/service.sbr';
 
-// LOGIN
+// LOGIN: Retorna o CODUSU para filtragem
 app.post('/api/login', async (req, res) => {
     try {
         const { user, password } = req.body;
@@ -22,20 +22,32 @@ app.post('/api/login', async (req, res) => {
             })
         });
         const data = await response.json();
-        if (data.status !== "1") return res.status(401).json({ success: false, error: data.statusMessage || "Erro no login" });
+        if (data.status !== "1") return res.status(401).json({ success: false, error: data.statusMessage });
         const cookies = response.headers.raw()['set-cookie'];
-        res.json({ success: true, data, cookies });
+        res.json({ success: true, data, cookies, codUsuLogado: data.responseBody.userId.$ });
     } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
-// CONSULTA (SELECT)
-app.post('/api/query', async (req, res) => {
+// BUSCAR FILA DE LIBERAÇÃO
+app.post('/api/liberacoes', async (req, res) => {
     try {
-        const { jsessionid, cookies, nuNota } = req.body;
+        const { jsessionid, cookies, codUsuLogado } = req.body;
         const headers = { 'Content-Type': 'application/json', 'appkey': APP_KEY };
         if (cookies) headers['Cookie'] = cookies.join('; ');
 
-        const sql = `SELECT NUNOTA, CODPARC, AD_OBSINT, AD_OBSINTERNA, AD_OBSPCP, AD_OBSFINANCEIRO, AD_OBSFATURAMENTO FROM TGFCAB WHERE NUNOTA = ${parseInt(nuNota)}`;
+        const sql = `
+            SELECT 
+                LIB.NUCHAVE, TOP.DESCROPER, PAR.RAZAOSOCIAL, CAB.VLRNOTA, 
+                LIB.VLRATUAL, LIB.DHSOLICIT, LIB.OBSERVACAO, LIB.EVENTO, USUSOL.NOMEUSU
+            FROM TSILIB LIB
+            JOIN TSIUSU USUSOL ON USUSOL.CODUSU = LIB.CODUSUSOLICIT
+            JOIN TGFCAB CAB ON CAB.NUNOTA = LIB.NUCHAVE
+            JOIN TGFPAR PAR ON PAR.CODPARC = CAB.CODPARC
+            JOIN TGFTOP TOP ON TOP.CODTIPOPER = CAB.CODTIPOPER AND TOP.DHALTER = CAB.DHTIPOPER
+            WHERE LIB.CODUSULIB = ${codUsuLogado} 
+            AND LIB.DHCONCLU IS NULL 
+            ORDER BY LIB.DHSOLICIT DESC
+        `;
 
         const response = await fetch(`${BASE_URL}?serviceName=DbExplorerSP.executeQuery&outputType=json&mgeSession=${jsessionid}`, {
             method: 'POST',
@@ -47,10 +59,10 @@ app.post('/api/query', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
-// UPDATE (CRUD - IGUAL AO SEU JSP)
-app.post('/api/update', async (req, res) => {
+// SIMULAR LIBERAÇÃO (UPDATE NO CAMPO DE TESTE)
+app.post('/api/teste-liberar', async (req, res) => {
     try {
-        const { jsessionid, cookies, nuNota, campos } = req.body;
+        const { jsessionid, cookies, nuNota, obsTeste } = req.body;
         const headers = { 'Content-Type': 'application/json', 'appkey': APP_KEY };
         if (cookies) headers['Cookie'] = cookies.join('; ');
 
@@ -60,29 +72,19 @@ app.post('/api/update', async (req, res) => {
                 dataSet: {
                     rootEntity: "CabecalhoNota",
                     dataRow: {
-                        localFields: {
-                            "AD_OBSINT": { "$": campos.AD_OBSINT },
-                            "AD_OBSINTERNA": { "$": campos.AD_OBSINTERNA },
-                            "AD_OBSPCP": { "$": campos.AD_OBSPCP },
-                            "AD_OBSFINANCEIRO": { "$": campos.AD_OBSFINANCEIRO },
-                            "AD_OBSFATURAMENTO": { "$": campos.AD_OBSFATURAMENTO }
-                        },
+                        localFields: { "AD_TESTEAPLICATIVOLIBERACAO": { "$": obsTeste } },
                         key: { "NUNOTA": { "$": nuNota } }
                     },
-                    entity: { fieldset: { list: "NUNOTA,AD_OBSINT,AD_OBSINTERNA,AD_OBSPCP,AD_OBSFINANCEIRO,AD_OBSFATURAMENTO" } }
+                    entity: { fieldset: { list: "NUNOTA,AD_TESTEAPLICATIVOLIBERACAO" } }
                 }
             }
         };
 
         const response = await fetch(`${BASE_URL}?serviceName=CRUDServiceProvider.saveRecord&outputType=json&mgeSession=${jsessionid}`, {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify(requestBody)
+            method: 'POST', headers: headers, body: JSON.stringify(requestBody)
         });
-
         const data = await response.json();
-        if (data.status === "1") res.json({ success: true, data });
-        else res.status(400).json({ success: false, error: data.statusMessage });
+        res.json({ success: data.status === "1", data });
     } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
