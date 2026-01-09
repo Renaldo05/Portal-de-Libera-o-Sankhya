@@ -9,7 +9,6 @@ app.use(express.json());
 const APP_KEY = 'a17c5048-ce8a-4f6f-b6e2-90ef06a38439';
 const BASE_URL = 'https://rendicolla.sankhyacloud.com.br/mge/service.sbr';
 
-// LOGIN (Igual ao anterior, mantendo a captura do ID)
 app.post('/api/login', async (req, res) => {
     try {
         const { user, password } = req.body;
@@ -24,12 +23,11 @@ app.post('/api/login', async (req, res) => {
         const data = await response.json();
         if (data.status !== "1") return res.status(401).json({ success: false, error: data.statusMessage });
         const cookies = response.headers.raw()['set-cookie'];
-        const rawId = data.responseBody?.idUsu?.$ || data.responseBody?.userId?.$ || null;
-        res.json({ success: true, data, cookies, codUsuLogado: rawId });
+        const codUsu = data.responseBody?.idUsu?.$ || data.responseBody?.userId?.$ || null;
+        res.json({ success: true, data, cookies, codUsuLogado: codUsu });
     } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
-// GET REAL ID (Ajuste técnico para converter Token em Número)
 app.post('/api/get-user-id', async (req, res) => {
     try {
         const { jsessionid, cookies } = req.body;
@@ -46,14 +44,12 @@ app.post('/api/get-user-id', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// FILA DE LIBERAÇÃO COM FILTRO DE DATA
 app.post('/api/liberacoes', async (req, res) => {
     try {
         const { jsessionid, cookies, codUsuLogado, dtIni, dtFim } = req.body;
         const headers = { 'Content-Type': 'application/json', 'appkey': APP_KEY };
         if (cookies) headers['Cookie'] = cookies.join('; ');
 
-        // Filtro de data formatado para Oracle (DD/MM/YYYY)
         let filtroData = "";
         if (dtIni && dtFim) {
             filtroData = ` AND LIB.DHSOLICIT BETWEEN TO_DATE('${dtIni}','YYYY-MM-DD') AND TO_DATE('${dtFim} 23:59:59','YYYY-MM-DD HH24:MI:SS')`;
@@ -64,14 +60,13 @@ app.post('/api/liberacoes', async (req, res) => {
         const response = await fetch(`${BASE_URL}?serviceName=DbExplorerSP.executeQuery&outputType=json&mgeSession=${jsessionid}`, {
             method: 'POST',
             headers: headers,
-            body: JSON.stringify({ "serviceName": "DbExplorerSP.executeQuery", "requestBody": { "sql": sql } })
+            body: JSON.stringify({ "serviceName": "DbExplorerSP.executeQuery", "requestBody": { "sql": sql.trim() } })
         });
         const data = await response.json();
         res.json({ success: true, data });
     } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
-// TESTE LIBERAR (CRUD)
 app.post('/api/teste-liberar', async (req, res) => {
     try {
         const { jsessionid, cookies, nuNota, obsTeste } = req.body;

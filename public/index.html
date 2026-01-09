@@ -3,114 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Portal de Liberação - Rendicolla</title>
+    <title>Rendicolla PRO - Liberações</title>
     <style>
-        :root { --amarelo: #FFD700; --preto: #1A1A1A; --cinza: #F4F4F4; --branco: #FFFFFF; }
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        :root { --amarelo: #FFD700; --preto: #1A1A1A; --cinza: #F4F4F4; --branco: #FFFFFF; --sucesso: #27ae60; --alerta: #f39c12; --perigo: #e74c3c; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background: var(--cinza); color: var(--preto); }
         .hidden { display: none !important; }
 
-        /* HEADER RENDICOLLA */
-        header { background: var(--preto); color: var(--amarelo); padding: 15px; text-align: center; border-bottom: 4px solid var(--amarelo); }
-        header h1 { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; }
+        header { background: var(--preto); color: var(--amarelo); padding: 20px; text-align: center; border-bottom: 5px solid var(--amarelo); box-shadow: 0 4px 10px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 100; }
+        header h1 { font-size: 1.2rem; letter-spacing: 2px; }
 
         .container { padding: 15px; max-width: 1200px; margin: 0 auto; }
 
-        /* FILTROS */
-        .filter-box { background: var(--branco); padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
-        .filter-box div { flex: 1; min-width: 150px; }
-        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; }
-        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        /* DASHBOARD */
+        .dash-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .dash-card { background: var(--preto); color: var(--branco); padding: 15px; border-radius: 12px; text-align: center; border-bottom: 4px solid var(--amarelo); }
+        .dash-card small { font-size: 10px; text-transform: uppercase; color: var(--amarelo); display: block; }
+        .dash-card h2 { font-size: 1.1rem; margin-top: 5px; }
+
+        /* FILTROS E BUSCA */
+        .filter-box { background: var(--branco); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .search-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; font-size: 16px; }
+        .date-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .date-group div { flex: 1; }
+        input[type="date"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+
+        /* LISTA */
+        .card { background: var(--branco); margin-bottom: 12px; border-radius: 12px; padding: 15px; border-left: 8px solid var(--preto); box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; }
+        .card-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .vlr { font-weight: 800; font-size: 1.1rem; color: var(--sucesso); }
+        .nu { font-weight: bold; font-size: 0.8rem; background: var(--preto); color: var(--amarelo); padding: 2px 6px; border-radius: 4px; }
+        
+        /* URGENCIA */
+        .urgency-badge { font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 20px; color: white; margin-top: 5px; display: inline-block; }
+        .u-hoje { background: var(--sucesso); }
+        .u-ontem { background: var(--alerta); }
+        .u-atrasado { background: var(--perigo); }
 
         /* BOTÕES */
-        button { background: var(--amarelo); color: var(--preto); border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
-        button:hover { background: #e6c200; transform: scale(1.02); }
-        .btn-logout { background: transparent; color: var(--preto); border: 1px solid var(--preto); margin-top: 20px; font-size: 11px; }
-
-        /* VERSÃO DESKTOP (TABELA) */
-        .desktop-view { display: block; overflow-x: auto; background: var(--branco); border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #eee; padding: 12px; text-align: left; font-size: 13px; }
-        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
-
-        /* VERSÃO MOBILE (CARDS) */
-        .mobile-view { display: none; }
-        .card { background: var(--branco); margin-bottom: 15px; border-radius: 10px; padding: 15px; border-left: 6px solid var(--amarelo); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .card-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-        .card-val { font-weight: bold; color: #27ae60; }
-
-        /* RESPONSIVIDADE */
-        @media (max-width: 768px) {
-            .desktop-view { display: none; }
-            .mobile-view { display: block; }
-            .filter-box div { flex: 1 1 100%; }
-        }
-
-        /* LOGIN */
-        .login-screen { max-width: 350px; margin: 80px auto; background: var(--branco); padding: 30px; border-radius: 15px; text-align: center; border-top: 10px solid var(--amarelo); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        button { background: var(--amarelo); color: var(--preto); border: none; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.2s; width: 100%; text-transform: uppercase; }
+        button:active { transform: scale(0.98); }
+        .btn-liberar { margin-top: 12px; }
 
         /* MODAL */
-        .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-        .modal-content { background: var(--branco); padding: 25px; border-radius: 15px; width: 100%; max-width: 400px; }
-        textarea { width: 100%; height: 100px; padding: 10px; margin: 15px 0; border-radius: 5px; border: 1px solid #ddd; }
+        .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; backdrop-filter: blur(4px); }
+        .modal-content { background: var(--branco); padding: 25px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; }
+        textarea { width: 100%; height: 100px; padding: 12px; border: 1px solid #ddd; border-radius: 10px; margin: 15px 0; font-size: 16px; }
+
+        .login-screen { max-width: 400px; margin: 60px auto; background: #fff; padding: 40px; border-radius: 20px; text-align: center; border-top: 8px solid var(--amarelo); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Rendicolla - Portal de Liberação</h1>
-    </header>
+    <header><h1>RENDICOLLA PRO</h1></header>
 
     <div class="container">
         <div id="loginSection" class="login-screen">
-            <h2 style="margin-bottom:20px">Acesso</h2>
-            <div id="loginStatus"></div>
-            <input type="text" id="userInput" placeholder="Usuário">
-            <input type="password" id="passInput" placeholder="Senha" style="margin-top:10px">
-            <button onclick="handleLogin()" style="width:100%; margin-top:20px">Entrar</button>
+            <h2 style="margin-bottom:25px">ACESSO AO PORTAL</h2>
+            <input type="text" id="userInput" placeholder="Seu Usuário">
+            <input type="password" id="passInput" placeholder="Sua Senha" style="margin-top:10px">
+            <button onclick="handleLogin()" style="margin-top:25px">ENTRAR</button>
         </div>
 
         <div id="mainSection" class="hidden">
-            <div class="filter-box">
-                <div>
-                    <label>Data Início</label>
-                    <input type="date" id="dtIni">
-                </div>
-                <div>
-                    <label>Data Fim</label>
-                    <input type="date" id="dtFim">
-                </div>
-                <button onclick="carregarLiberacoes()">Filtrar</button>
+            <div class="dash-row">
+                <div class="dash-card"><small>Pedidos</small><h2 id="dashCount">0</h2></div>
+                <div class="dash-card"><small>Total</small><h2 id="dashTotal">R$ 0</h2></div>
+                <div class="dash-card"><small>Média</small><h2 id="dashAvg">R$ 0</h2></div>
             </div>
 
-            <p id="userInfo" style="margin-bottom:10px; font-size:12px; font-weight:bold"></p>
+            <div class="filter-box">
+                <input type="text" id="searchInput" class="search-input" placeholder="Buscar parceiro ou nota..." onkeyup="filtrarLocal()">
+                <div class="date-group">
+                    <div><label style="font-size:10px; font-weight:bold">DE:</label><input type="date" id="dtIni"></div>
+                    <div><label style="font-size:10px; font-weight:bold">ATÉ:</label><input type="date" id="dtFim"></div>
+                </div>
+                <button onclick="carregarLiberacoes()">ATUALIZAR FILA</button>
+            </div>
 
-            <div id="desktopContainer" class="desktop-view"></div>
-            <div id="mobileContainer" class="mobile-view"></div>
-
-            <button class="btn-logout" onclick="location.reload()">Sair do Sistema</button>
+            <div id="listContainer"></div>
+            
+            <button onclick="location.reload()" style="background:none; color:#999; font-size:12px; margin-top:30px">Sair do Sistema</button>
         </div>
     </div>
 
     <div id="modalTeste" class="modal hidden">
         <div class="modal-content">
-            <h3>Simular Liberação</h3>
-            <textarea id="obsTesteInput" placeholder="Motivo da liberação..."></textarea>
-            <button onclick="confirmarLiberacao()" style="width:100%">Confirmar</button>
-            <button onclick="document.getElementById('modalTeste').classList.add('hidden')" style="background:none; color:#666; width:100%; margin-top:10px">Cancelar</button>
+            <h3 id="modalLabel">Liberar Pedido</h3>
+            <textarea id="obsTesteInput" placeholder="Observação interna..."></textarea>
+            <button onclick="confirmarLiberacao()" style="background:var(--sucesso); color:white">CONFIRMAR LIBERAÇÃO</button>
+            <button onclick="document.getElementById('modalTeste').classList.add('hidden')" style="background:none; color:#999; margin-top:10px">CANCELAR</button>
         </div>
     </div>
 
     <script>
         const API_BASE = '/api';
         let session = { id: null, cookies: null, codUsu: null, currentNuNota: null };
+        let listaOriginal = [];
 
-        // Define datas padrão (últimos 7 dias)
-        const hoje = new Date().toISOString().split('T')[0];
-        const semanaPassada = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        document.getElementById('dtIni').value = semanaPassada;
-        document.getElementById('dtFim').value = hoje;
+        // Inicializar datas
+        const d = new Date();
+        document.getElementById('dtFim').value = d.toISOString().split('T')[0];
+        d.setDate(d.getDate() - 15);
+        document.getElementById('dtIni').value = d.toISOString().split('T')[0];
 
         async function handleLogin() {
             const user = document.getElementById('userInput').value;
@@ -126,7 +121,6 @@
                     session.id = result.data.responseBody.jsessionid.$;
                     session.cookies = result.cookies;
                     
-                    // Conversão de ID
                     const resId = await fetch(`${API_BASE}/get-user-id`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -135,89 +129,100 @@
                     const idData = await resId.json();
                     session.codUsu = idData.realId || 9;
 
-                    document.getElementById('userInfo').innerText = "LIBERADOR: " + session.codUsu;
                     document.getElementById('loginSection').classList.add('hidden');
                     document.getElementById('mainSection').classList.remove('hidden');
                     carregarLiberacoes();
-                } else { alert("Erro: " + result.error); }
+                } else { alert("Acesso inválido."); }
             } catch (e) { alert("Erro de rede."); }
         }
 
         async function carregarLiberacoes() {
-            const desk = document.getElementById('desktopContainer');
-            const mob = document.getElementById('mobileContainer');
-            desk.innerHTML = mob.innerHTML = "<p style='padding:20px'>Buscando...</p>";
-
-            const dtIni = document.getElementById('dtIni').value;
-            const dtFim = document.getElementById('dtFim').value;
+            const container = document.getElementById('listContainer');
+            container.innerHTML = "<p style='text-align:center'>Sincronizando...</p>";
 
             try {
                 const res = await fetch(`${API_BASE}/liberacoes`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        jsessionid: session.id, 
-                        cookies: session.cookies, 
+                        jsessionid: session.id, cookies: session.cookies, 
                         codUsuLogado: session.codUsu,
-                        dtIni, dtFim
+                        dtIni: document.getElementById('dtIni').value,
+                        dtFim: document.getElementById('dtFim').value
                     })
                 });
                 const result = await res.json();
-                const rows = result.data.responseBody?.rows || [];
+                listaOriginal = result.data.responseBody?.rows || [];
+                
+                // Dashboard update
+                const total = listaOriginal.reduce((acc, curr) => acc + parseFloat(curr[3]), 0);
+                document.getElementById('dashCount').innerText = listaOriginal.length;
+                document.getElementById('dashTotal').innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                document.getElementById('dashAvg').innerText = (total / (listaOriginal.length || 1)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-                if (rows.length === 0) {
-                    desk.innerHTML = mob.innerHTML = "<p style='padding:20px'>Nenhuma liberação pendente no período.</p>";
-                    return;
-                }
-
-                // MONTAR TABELA DESKTOP
-                let htmlDesk = `<table><thead><tr><th>Nota</th><th>Parceiro</th><th>Operação</th><th>Solicitante</th><th>Valor</th><th>Ação</th></tr></thead><tbody>`;
-                let htmlMob = "";
-
-                rows.forEach(row => {
-                    const vlr = parseFloat(row[3]).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                    
-                    htmlDesk += `<tr>
-                        <td><b>${row[0]}</b></td>
-                        <td>${row[2]}</td>
-                        <td>${row[1]}</td>
-                        <td>${row[9]}</td>
-                        <td style="color:green; font-weight:bold">${vlr}</td>
-                        <td><button onclick="abrirModal(${row[0]})" style="padding:5px 10px; font-size:11px">Liberar</button></td>
-                    </tr>`;
-
-                    htmlMob += `<div class="card">
-                        <div class="card-row"><span style="font-weight:bold">#${row[0]}</span> <span class="card-val">${vlr}</span></div>
-                        <div style="font-size:13px; margin:5px 0"><b>${row[2]}</b></div>
-                        <div style="font-size:12px; color:#666">${row[1]}</div>
-                        <div style="font-size:12px; color:#999; margin-top:5px">Solicitante: ${row[9]}</div>
-                        <button onclick="abrirModal(${row[0]})" style="width:100%; margin-top:10px; font-size:12px">Liberar</button>
-                    </div>`;
-                });
-
-                desk.innerHTML = htmlDesk + "</tbody></table>";
-                mob.innerHTML = htmlMob;
-
-            } catch (e) { alert("Erro ao carregar lista."); }
+                renderizar(listaOriginal);
+            } catch (e) { container.innerHTML = "Erro ao buscar dados."; }
         }
 
-        function abrirModal(nuNota) { session.currentNuNota = nuNota; document.getElementById('modalTeste').classList.remove('hidden'); }
-        
+        function renderizar(rows) {
+            const container = document.getElementById('listContainer');
+            container.innerHTML = rows.length === 0 ? "<p style='text-align:center; padding:20px;'>Nenhuma pendência encontrada.</p>" : "";
+
+            rows.forEach(row => {
+                // LÓGICA DE URGÊNCIA POR DATA DE SOLICITAÇÃO (row[6])
+                // O formato do Oracle costuma ser DD/MM/YYYY HH24:MI:SS
+                const partes = row[6].split(' ')[0].split('/');
+                const dataSolicit = new Date(partes[2], partes[1] - 1, partes[0]);
+                const diffDias = Math.floor((new Date() - dataSolicit) / (1000 * 60 * 60 * 24));
+
+                let urgClass = 'u-hoje';
+                let urgLabel = 'Solicitado Hoje';
+                
+                if(diffDias === 1) { urgClass = 'u-ontem'; urgLabel = 'Desde Ontem'; }
+                else if(diffDias > 1) { urgClass = 'u-atrasado'; urgLabel = `Há ${diffDias} dias`; }
+
+                container.innerHTML += `
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="nu">#${row[0]}</span>
+                            <span class="vlr">${parseFloat(row[3]).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                        </div>
+                        <div style="font-weight:bold; font-size:14px">${row[2]}</div>
+                        <div style="font-size:12px; color:#666">${row[1]}</div>
+                        <div class="urgency-badge ${urgClass}">${urgLabel}</div>
+                        <div style="font-size:10px; color:#999; margin-top:5px">Solicitado por: ${row[9]}</div>
+                        <button class="btn-liberar" onclick="abrirModal(${row[0]})">ANALISAR LIBERAÇÃO</button>
+                    </div>
+                `;
+            });
+        }
+
+        function filtrarLocal() {
+            const termo = document.getElementById('searchInput').value.toLowerCase();
+            const filtrados = listaOriginal.filter(r => 
+                r[0].toString().includes(termo) || r[2].toLowerCase().includes(termo)
+            );
+            renderizar(filtrados);
+        }
+
+        function abrirModal(nuNota) {
+            session.currentNuNota = nuNota;
+            document.getElementById('modalLabel').innerText = "Liberar Pedido #" + nuNota;
+            document.getElementById('modalTeste').classList.remove('hidden');
+        }
+
         async function confirmarLiberacao() {
             const obs = document.getElementById('obsTesteInput').value;
-            try {
-                const res = await fetch(`${API_BASE}/teste-liberar`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ jsessionid: session.id, cookies: session.cookies, nuNota: session.currentNuNota, obsTeste: obs })
-                });
-                const result = await res.json();
-                if (result.success) { 
-                    alert("Liberação simulada com sucesso!"); 
-                    document.getElementById('modalTeste').classList.add('hidden');
-                    carregarLiberacoes(); 
-                }
-            } catch (e) { alert("Erro ao gravar."); }
+            const res = await fetch(`${API_BASE}/teste-liberar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ jsessionid: session.id, cookies: session.cookies, nuNota: session.currentNuNota, obsTeste: obs })
+            });
+            if ((await res.json()).success) {
+                alert("Simulação concluída com sucesso!");
+                document.getElementById('modalTeste').classList.add('hidden');
+                carregarLiberacoes();
+            }
         }
     </script>
 </body>
